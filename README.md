@@ -26,7 +26,7 @@ npx agent-ready scan https://example.com
 ```bash
 agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]
 agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready init [--framework <name>] [--preset <name>] [--dry-run] [--json]
+agent-ready init [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]
 agent-ready add <feature> [--json]
 agent-ready explain <check>
 ```
@@ -61,6 +61,12 @@ Scaffold an application-style project:
 
 ```bash
 npx agent-ready init --framework express --preset application
+```
+
+Scaffold an exact feature set:
+
+```bash
+npx agent-ready init --framework next --features robots,llms,mcp
 ```
 
 Add only an MCP server card scaffold:
