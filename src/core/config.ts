@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { join } from "node:path";
 import type { AgentReadyConfig } from "./types";
+import { assertValidAgentReadyConfig } from "./config-validation";
 
 const CONFIG_FILENAMES = [
   "agent-ready.config.json",
@@ -18,11 +19,11 @@ export async function loadAgentReadyConfig(cwd: string): Promise<AgentReadyConfi
     }
 
     if (filename.endsWith(".json")) {
-      return JSON.parse(readFileSync(path, "utf8")) as AgentReadyConfig;
+      return assertValidAgentReadyConfig(JSON.parse(readFileSync(path, "utf8")));
     }
 
     const loaded = await import(pathToFileURL(path).href);
-    return normalizeModuleConfig(loaded) as AgentReadyConfig;
+    return assertValidAgentReadyConfig(normalizeModuleConfig(loaded));
   }
 
   return {};

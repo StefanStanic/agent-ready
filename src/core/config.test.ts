@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadAgentReadyConfig } from "./config";
+import { AgentReadyConfigError, validateAgentReadyConfig } from "./config-validation";
 
 const tempDirs: string[] = [];
 
@@ -63,6 +64,43 @@ describe("loadAgentReadyConfig", () => {
     const config = await loadAgentReadyConfig(cwd);
 
     expect(config.doctor?.failOnStatuses).toEqual(["warn", "fail"]);
+  });
+
+  it("rejects invalid config with a user-facing error", async () => {
+    const cwd = createTempDir();
+    writeFileSync(
+      join(cwd, "agent-ready.config.json"),
+      JSON.stringify(
+        {
+          scan: {
+            minScore: "high"
+          },
+          init: {
+            features: ["robots", "nope"]
+          }
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    await expect(loadAgentReadyConfig(cwd)).rejects.toBeInstanceOf(AgentReadyConfigError);
+  });
+
+  it("returns detailed validation issues", () => {
+    const validation = validateAgentReadyConfig({
+      defaults: {
+        output: "xml"
+      },
+      init: {
+        preset: "bad"
+      }
+    });
+
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("defaults.output must be one of: human, json.");
+    expect(validation.errors).toContain("init.preset must be one of: content-site, application.");
   });
 });
 

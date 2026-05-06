@@ -5,10 +5,16 @@ export { scaffoldProject } from "./scaffold/project";
 export { explainCheck } from "./core/explain-check";
 export { evaluateScanFailure } from "./core/evaluate";
 export { loadAgentReadyConfig } from "./core/config";
+export {
+  AgentReadyConfigError,
+  assertValidAgentReadyConfig,
+  validateAgentReadyConfig
+} from "./core/config-validation";
 export { renderScanResult, renderScaffoldResult } from "./reporters/human";
 export type {
   AgentReadyCommandConfig,
   AgentReadyConfig,
+  ConfigValidationResult,
   AgentReadyScaffoldConfig,
   CategoryScoreMap,
   CheckDefinition,

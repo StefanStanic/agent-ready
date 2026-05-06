@@ -140,3 +140,8 @@ export type AgentReadyConfig = {
   init?: AgentReadyScaffoldConfig & { output?: OutputFormat };
   scan?: AgentReadyCommandConfig;
 };
+
+export type ConfigValidationResult = {
+  errors: string[];
+  valid: boolean;
+};
