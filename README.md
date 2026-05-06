@@ -31,67 +31,85 @@ npx @stefkec/agent-ready scan https://example.com
 ## CLI
 
 ```bash
-agent-ready scan <url> [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]
-agent-ready doctor [cwd] [--cwd <path>] [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]
-agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--report-file <path>]
-agent-ready add <feature> [--cwd <path>] [--json] [--report-file <path>]
+# Scan a live site
+agent-ready scan <url>
+
+# Scan a local project
+agent-ready doctor [cwd]
+
+# Scaffold agent-ready endpoints (auto-detects framework)
+agent-ready init [--interactive] [--framework <name>] [--preset <name>] [--features <list>]
+
+# Add a single feature
+agent-ready add <feature> [--interactive]
+
+# Show check documentation
 agent-ready explain <check>
+
+# List available options
+agent-ready --list-features
+agent-ready --list-frameworks
+agent-ready --list-checks
 ```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--format human\|json\|markdown` | Output format (default: human) |
+| `--json` | Shorthand for `--format json` |
+| `--interactive` | Scan first, then prompt for your real site details before scaffolding |
+| `--min-score <n>` | Fail with exit code 1 if score is below `n` |
+| `--fail-on-status <list>` | Fail if any check matches the given statuses (comma-separated) |
+| `--report-file <path>` | Write output to a file in addition to stdout |
+| `--cwd <path>` | Target a specific directory |
+| `--dry-run` | Preview scaffold without writing files |
+| `--preset content-site\|application` | Feature preset for init |
+| `--features <list>` | Explicit feature list (overrides preset) |
 
 ### Examples
 
 Scan a live site:
 
 ```bash
-npx agent-ready scan https://example.com
+agent-ready scan https://anyvan.com
 ```
 
-Scan a live site and fail CI on warnings or failures:
+Interactive scaffold — scans first, asks for your details:
 
 ```bash
-npx agent-ready scan https://example.com --min-score 80 --fail-on-status warn,fail
+agent-ready init --interactive
 ```
 
-Write a JSON report artifact:
+Scan a live site and fail CI on low score:
 
 ```bash
-npx agent-ready doctor --json --report-file ./reports/agent-ready.json
+agent-ready scan https://example.com --min-score 80 --fail-on-status fail
+```
+
+Write a JSON or Markdown report artifact:
+
+```bash
+agent-ready doctor --format json --report-file ./reports/agent-ready.json
+agent-ready doctor --format markdown --report-file ./reports/agent-ready.md
 ```
 
 Inspect a local project:
 
 ```bash
-npx agent-ready doctor
-```
-
-Scaffold a Next.js project:
-
-```bash
-npx agent-ready init --framework next
+agent-ready doctor
 ```
 
 Scaffold an application-style project:
 
 ```bash
-npx agent-ready init --framework express --preset application
+agent-ready init --framework express --preset application
 ```
 
-Scaffold an exact feature set:
+Add only an MCP server card:
 
 ```bash
-npx agent-ready init --framework next --features robots,llms,mcp
-```
-
-Scaffold into another directory:
-
-```bash
-npx agent-ready init --cwd ./apps/web --framework next --preset content-site
-```
-
-Add only an MCP server card scaffold:
-
-```bash
-npx agent-ready add mcp
+agent-ready add mcp
 ```
 
 ## Config file
@@ -162,7 +180,17 @@ Default behavior:
 - `vite-react`
 - `vite-vue`
 
-Framework support is uneven right now. `next`, `astro`, `sveltekit`, `express`, and `hono` have the strongest scaffold behavior.
+All 8 frameworks have native scaffold support with framework-appropriate route handlers, static files, or dev server plugins.
+
+## Checks (18 total)
+
+| Category | Checks |
+|----------|--------|
+| Discoverability | robots.txt, Sitemap, Link Headers |
+| Content Accessibility | Markdown Negotiation |
+| Bot Access Control | AI Bot Rules, Content Signals, Web Bot Auth |
+| Discovery | API Catalog, MCP Server Card, A2A Agent Card, Agent Skills, WebMCP, OAuth Discovery, OAuth Protected Resource |
+| Commerce | x402, MPP, UCP, ACP |
 
 ## TypeScript usage
 
