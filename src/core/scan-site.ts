@@ -1,5 +1,13 @@
+import { checkAiBotRules } from "../checks/bot-access-control/ai-bot-rules";
+import { checkContentSignals } from "../checks/bot-access-control/content-signals";
+import { checkWebBotAuth } from "../checks/bot-access-control/web-bot-auth";
 import { checkMarkdownNegotiation } from "../checks/content/markdown-negotiation";
+import { checkA2aAgentCard } from "../checks/discovery/a2a-agent-card";
+import { checkApiCatalog } from "../checks/discovery/api-catalog";
 import { checkMcpServerCard } from "../checks/discovery/mcp-server-card";
+import { checkOauthDiscovery } from "../checks/discovery/oauth-discovery";
+import { checkOauthProtectedResource } from "../checks/discovery/oauth-protected-resource";
+import { checkLinkHeaders } from "../checks/discoverability/link-headers";
 import { checkRobotsTxt } from "../checks/discoverability/robots-txt";
 import { checkSitemap } from "../checks/discoverability/sitemap";
 import { summarizeScores } from "./checks";
@@ -10,8 +18,16 @@ export async function scanSite(options: ScanSiteOptions): Promise<ScanResult> {
   const checks = await Promise.all([
     checkRobotsTxt(baseUrl),
     checkSitemap(baseUrl),
+    checkLinkHeaders(baseUrl),
     checkMarkdownNegotiation(baseUrl),
-    checkMcpServerCard(baseUrl)
+    checkAiBotRules(baseUrl),
+    checkContentSignals(baseUrl),
+    checkWebBotAuth(baseUrl),
+    checkApiCatalog(baseUrl),
+    checkMcpServerCard(baseUrl),
+    checkA2aAgentCard(baseUrl),
+    checkOauthDiscovery(baseUrl),
+    checkOauthProtectedResource(baseUrl)
   ]);
   const summary = summarizeScores(checks);
 

@@ -1,5 +1,6 @@
 import { explainCheck, scanProject, scanSite, scaffoldProject } from "./index";
 import type { FrameworkName, ScaffoldFeature } from "./core/types";
+import { renderScanResult, renderScaffoldResult } from "./reporters/human";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -40,13 +41,13 @@ async function runScan(args: string[]): Promise<void> {
   }
 
   const report = await scanSite({ url });
-  printJson(report);
+  printOutput(report, hasFlag(args, "--json") ? "json" : "human");
 }
 
 async function runDoctor(args: string[]): Promise<void> {
   const cwd = args[0];
   const report = await scanProject({ cwd });
-  printJson(report);
+  printOutput(report, hasFlag(args, "--json") ? "json" : "human");
 }
 
 async function runInit(args: string[]): Promise<void> {
@@ -56,7 +57,7 @@ async function runInit(args: string[]): Promise<void> {
     framework,
     dryRun
   });
-  printJson(result);
+  printScaffoldOutput(result, hasFlag(args, "--json") ? "json" : "human");
 }
 
 async function runAdd(args: string[]): Promise<void> {
@@ -69,7 +70,7 @@ async function runAdd(args: string[]): Promise<void> {
   const result = await scaffoldProject({
     features: [feature]
   });
-  printJson(result);
+  printScaffoldOutput(result, hasFlag(args, "--json") ? "json" : "human");
 }
 
 function runExplain(args: string[]): void {
@@ -106,16 +107,40 @@ function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
 
+function printOutput(
+  value: Parameters<typeof renderScanResult>[0],
+  format: "json" | "human"
+): void {
+  if (format === "json") {
+    printJson(value);
+    return;
+  }
+
+  console.log(renderScanResult(value));
+}
+
+function printScaffoldOutput(
+  value: Parameters<typeof renderScaffoldResult>[0],
+  format: "json" | "human"
+): void {
+  if (format === "json") {
+    printJson(value);
+    return;
+  }
+
+  console.log(renderScaffoldResult(value));
+}
+
 function printHelp(): void {
   console.log(
     [
       "agent-ready",
       "",
       "Commands:",
-      "  agent-ready scan <url>",
-      "  agent-ready init [--framework <name>] [--dry-run]",
-      "  agent-ready add <feature>",
-      "  agent-ready doctor [cwd]",
+      "  agent-ready scan <url> [--json]",
+      "  agent-ready init [--framework <name>] [--dry-run] [--json]",
+      "  agent-ready add <feature> [--json]",
+      "  agent-ready doctor [cwd] [--json]",
       "  agent-ready explain <check>"
     ].join("\n")
   );
