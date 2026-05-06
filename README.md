@@ -1,5 +1,10 @@
 # agent-ready
 
+[![npm version](https://img.shields.io/npm/v/@stefkec/agent-ready)](https://www.npmjs.com/package/@stefkec/agent-ready)
+[![npm downloads](https://img.shields.io/npm/dm/@stefkec/agent-ready)](https://www.npmjs.com/package/@stefkec/agent-ready)
+[![license](https://img.shields.io/npm/l/@stefkec/agent-ready)](LICENSE)
+[![node](https://img.shields.io/node/v/@stefkec/agent-ready)](https://nodejs.org)
+
 `agent-ready` is a TypeScript-first CLI and library for scanning agent-readiness signals and scaffolding framework-specific machine-readable endpoints.
 
 ## What it does
