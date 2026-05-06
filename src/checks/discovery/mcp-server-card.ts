@@ -1,5 +1,7 @@
 import type { CheckResult } from "../../core/types";
+import { validateMcpServerCardDocument } from "../../utils/discovery-documents";
 import { fetchText } from "../../utils/http";
+import { tryParseJson } from "../../utils/json";
 
 export async function checkMcpServerCard(baseUrl: URL): Promise<CheckResult> {
   const url = new URL("/.well-known/mcp.json", baseUrl);
@@ -8,16 +10,10 @@ export async function checkMcpServerCard(baseUrl: URL): Promise<CheckResult> {
     const response = await fetchText(url.toString());
     const body = response.body.trim();
     const isJson = (response.headers.get("content-type") ?? "").includes("json");
-    let parsed = false;
+    const parsed = tryParseJson(body);
+    const validation = validateMcpServerCardDocument(parsed);
 
-    try {
-      JSON.parse(body);
-      parsed = true;
-    } catch {
-      parsed = false;
-    }
-
-    const pass = response.status === 200 && parsed;
+    const pass = response.status === 200 && validation.data !== null;
 
     return {
       id: "mcp-server-card",
@@ -29,11 +25,15 @@ export async function checkMcpServerCard(baseUrl: URL): Promise<CheckResult> {
         ? "An MCP server card was discovered."
         : "No valid MCP server card was found.",
       evidence: {
-        url: url.toString(),
+        url: response.url,
         status: response.status,
         contentType: response.headers.get("content-type"),
         isJson,
-        parsed,
+        parsed: parsed !== null,
+        name: validation.data?.name ?? null,
+        cardUrl: validation.data?.url ?? null,
+        version: validation.data?.version ?? null,
+        validationErrors: validation.errors,
         bodyPreview: body.slice(0, 200)
       },
       fixes: ["Publish /.well-known/mcp.json with valid JSON metadata."],

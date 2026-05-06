@@ -17,6 +17,9 @@ export async function checkLinkHeaders(baseUrl: URL): Promise<CheckResult> {
     const rawHeader = response.headers.get("link") ?? "";
     const links = parseLinkHeader(rawHeader);
     const usefulLinks = links.filter((link) => link.rels.some((rel) => USEFUL_RELS.has(rel)));
+    const markdownAlternates = usefulLinks.filter(
+      (link) => link.rels.includes("alternate") && link.attributes.type === "text/markdown"
+    );
 
     return {
       id: "link-headers",
@@ -31,13 +34,15 @@ export async function checkLinkHeaders(baseUrl: URL): Promise<CheckResult> {
             ? "Link headers exist, but they do not expose strong discovery signals."
             : "No Link headers were found on the homepage.",
       evidence: {
-        url: baseUrl.toString(),
+        url: response.url,
         status: response.status,
         linkHeader: rawHeader,
         linkCount: links.length,
+        markdownAlternateCount: markdownAlternates.length,
         usefulLinks: usefulLinks.map((link) => ({
           url: link.url,
-          rels: link.rels
+          rels: link.rels,
+          type: link.attributes.type ?? null
         }))
       },
       fixes: [

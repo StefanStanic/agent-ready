@@ -1,5 +1,6 @@
 import type { CheckResult } from "../../core/types";
 import { fetchText } from "../../utils/http";
+import { validateOauthDiscoveryDocument } from "../../utils/discovery-documents";
 import { tryParseJson } from "../../utils/json";
 
 const CANDIDATE_PATHS = [
@@ -19,8 +20,9 @@ export async function checkOauthDiscovery(baseUrl: URL): Promise<CheckResult> {
       }
 
       const parsed = tryParseJson(response.body);
+      const validation = validateOauthDiscoveryDocument(parsed);
 
-      if (isOauthMetadata(parsed)) {
+      if (validation.data) {
         return {
           id: "oauth-discovery",
           category: "discovery",
@@ -29,10 +31,12 @@ export async function checkOauthDiscovery(baseUrl: URL): Promise<CheckResult> {
           scoreWeight: 5,
           summary: "OAuth authorization server metadata was discovered.",
           evidence: {
-            url: url.toString(),
-            issuer: parsed.issuer,
-            authorizationEndpoint: parsed.authorization_endpoint,
-            tokenEndpoint: parsed.token_endpoint
+            url: response.url,
+            issuer: validation.data.issuer,
+            authorizationEndpoint: validation.data.authorization_endpoint ?? null,
+            tokenEndpoint: validation.data.token_endpoint ?? null,
+            jwksUri: validation.data.jwks_uri ?? null,
+            scopesSupported: validation.data.scopes_supported ?? []
           },
           fixes: [],
           docs: ["https://isitagentready.com/"]
@@ -59,19 +63,4 @@ export async function checkOauthDiscovery(baseUrl: URL): Promise<CheckResult> {
     ],
     docs: ["https://isitagentready.com/"]
   };
-}
-
-type OauthMetadata = {
-  issuer: string;
-  authorization_endpoint?: string;
-  token_endpoint?: string;
-};
-
-function isOauthMetadata(input: unknown): input is OauthMetadata {
-  if (!input || typeof input !== "object") {
-    return false;
-  }
-
-  const value = input as Record<string, unknown>;
-  return typeof value.issuer === "string";
 }

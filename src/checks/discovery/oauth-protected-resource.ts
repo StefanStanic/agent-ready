@@ -1,5 +1,6 @@
 import type { CheckResult } from "../../core/types";
 import { fetchText } from "../../utils/http";
+import { validateOauthProtectedResourceDocument } from "../../utils/discovery-documents";
 import { tryParseJson } from "../../utils/json";
 
 export async function checkOauthProtectedResource(baseUrl: URL): Promise<CheckResult> {
@@ -28,7 +29,8 @@ export async function checkOauthProtectedResource(baseUrl: URL): Promise<CheckRe
     }
 
     const parsed = tryParseJson(response.body);
-    const pass = isProtectedResourceMetadata(parsed);
+    const validation = validateOauthProtectedResourceDocument(parsed);
+    const pass = validation.data !== null;
 
     return {
       id: "oauth-protected-resource",
@@ -40,10 +42,14 @@ export async function checkOauthProtectedResource(baseUrl: URL): Promise<CheckRe
         ? "OAuth protected resource metadata was discovered."
         : "The OAuth protected resource document is not valid.",
       evidence: {
-        url: url.toString(),
+        url: response.url,
         status: response.status,
         contentType: response.headers.get("content-type"),
-        parsed: parsed !== null
+        parsed: parsed !== null,
+        resource: validation.data?.resource ?? null,
+        authorizationServers: validation.data?.authorization_servers ?? [],
+        scopesSupported: validation.data?.scopes_supported ?? [],
+        validationErrors: validation.errors
       },
       fixes: ["Publish valid JSON at /.well-known/oauth-protected-resource."],
       docs: ["https://isitagentready.com/"]
@@ -64,13 +70,4 @@ export async function checkOauthProtectedResource(baseUrl: URL): Promise<CheckRe
       docs: ["https://isitagentready.com/"]
     };
   }
-}
-
-function isProtectedResourceMetadata(input: unknown): input is { resource: string } {
-  if (!input || typeof input !== "object") {
-    return false;
-  }
-
-  const value = input as Record<string, unknown>;
-  return typeof value.resource === "string";
 }

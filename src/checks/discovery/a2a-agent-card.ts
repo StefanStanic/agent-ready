@@ -1,4 +1,5 @@
 import type { CheckResult } from "../../core/types";
+import { validateA2aAgentCardDocument } from "../../utils/discovery-documents";
 import { fetchText } from "../../utils/http";
 import { tryParseJson } from "../../utils/json";
 
@@ -8,7 +9,8 @@ export async function checkA2aAgentCard(baseUrl: URL): Promise<CheckResult> {
   try {
     const response = await fetchText(url.toString());
     const parsed = tryParseJson(response.body);
-    const pass = response.status === 200 && parsed !== null;
+    const validation = validateA2aAgentCardDocument(parsed);
+    const pass = response.status === 200 && validation.data !== null;
 
     return {
       id: "a2a-agent-card",
@@ -20,10 +22,14 @@ export async function checkA2aAgentCard(baseUrl: URL): Promise<CheckResult> {
         ? "An A2A agent card was discovered."
         : "No valid A2A agent card was found.",
       evidence: {
-        url: url.toString(),
+        url: response.url,
         status: response.status,
         contentType: response.headers.get("content-type"),
-        parsed: parsed !== null
+        parsed: parsed !== null,
+        name: validation.data?.name ?? null,
+        description: validation.data?.description ?? null,
+        cardUrl: validation.data?.url ?? null,
+        validationErrors: validation.errors
       },
       fixes: ["Publish /.well-known/agent.json with valid JSON metadata."],
       docs: ["https://isitagentready.com/"]

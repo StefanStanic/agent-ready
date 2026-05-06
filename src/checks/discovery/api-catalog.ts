@@ -1,5 +1,6 @@
 import type { CheckResult } from "../../core/types";
 import { fetchText } from "../../utils/http";
+import { validateOpenApiDocument } from "../../utils/discovery-documents";
 import { tryParseJson } from "../../utils/json";
 
 const CANDIDATE_PATHS = [
@@ -25,9 +26,14 @@ export async function checkApiCatalog(baseUrl: URL): Promise<CheckResult> {
       const parsedJson = tryParseJson(response.body);
       const looksLikeYaml =
         /^openapi:\s*["']?\d/im.test(response.body) || /^swagger:\s*["']?\d/im.test(response.body);
-      const jsonShape = isOpenApiDocument(parsedJson);
+      const jsonValidation = validateOpenApiDocument(parsedJson);
 
-      if (jsonShape || looksLikeYaml) {
+      if (jsonValidation.data || looksLikeYaml) {
+        const pathCount =
+          jsonValidation.data?.paths && typeof jsonValidation.data.paths === "object"
+            ? Object.keys(jsonValidation.data.paths).length
+            : null;
+
         return {
           id: "api-catalog",
           category: "discovery",
@@ -36,10 +42,14 @@ export async function checkApiCatalog(baseUrl: URL): Promise<CheckResult> {
           scoreWeight: 8,
           summary: "A machine-readable API description was discovered.",
           evidence: {
-            url: url.toString(),
+            url: response.url,
             status: response.status,
             contentType: response.headers.get("content-type"),
-            format: jsonShape ? "json" : "yaml"
+            format: jsonValidation.data ? "json" : "yaml",
+            apiTitle: jsonValidation.data?.info?.title ?? null,
+            apiVersion: jsonValidation.data?.info?.version ?? null,
+            pathCount,
+            validationErrors: jsonValidation.errors
           },
           fixes: [],
           docs: ["https://isitagentready.com/"]
@@ -66,13 +76,4 @@ export async function checkApiCatalog(baseUrl: URL): Promise<CheckResult> {
     ],
     docs: ["https://isitagentready.com/"]
   };
-}
-
-function isOpenApiDocument(input: unknown): input is { openapi?: string; swagger?: string } {
-  if (!input || typeof input !== "object") {
-    return false;
-  }
-
-  const value = input as { openapi?: unknown; swagger?: unknown };
-  return typeof value.openapi === "string" || typeof value.swagger === "string";
 }
