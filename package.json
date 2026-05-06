@@ -1,6 +1,6 @@
 {
   "name": "@stefkec/agent-ready",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Scan sites for agent readiness and scaffold framework-specific machine-readable endpoints.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,6 +43,14 @@
     "webmcp"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StefanStanic/agent-ready.git"
+  },
+  "homepage": "https://github.com/StefanStanic/agent-ready#readme",
+  "bugs": {
+    "url": "https://github.com/StefanStanic/agent-ready/issues"
+  },
   "publishConfig": {
     "access": "public"
   },

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://stefkec.github.io/agent-ready/config.schema.json",
+  "$id": "https://raw.githubusercontent.com/StefanStanic/agent-ready/main/schema.json",
   "title": "agent-ready Config",
   "description": "Configuration for the agent-ready CLI and library.",
   "type": "object",
