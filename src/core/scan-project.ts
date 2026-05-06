@@ -1,9 +1,12 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { summarizeScores } from "./checks";
 import type { CheckResult, ScanProjectOptions, ScanProjectResult } from "./types";
 import { detectFramework } from "../frameworks/detect";
 import { resolveFeatureCandidates, type ProjectFeature } from "../frameworks/conventions";
 import { RESULT_SCHEMA_VERSION } from "./schema";
+import { tryParseJson } from "../utils/json";
+import { parseRobotsTxt } from "../utils/robots";
+import { parseSitemapXml } from "../utils/sitemap";
 
 export async function scanProject(options: ScanProjectOptions = {}): Promise<ScanProjectResult> {
   const cwd = options.cwd ?? process.cwd();
@@ -130,17 +133,181 @@ function projectFeatureCheck(
     id: input.id,
     title: input.title,
     category: input.category,
-    status: exists ? "pass" : "warn",
+    status: exists ? validateContents(matchedPath, input.feature) : "warn",
     scoreWeight: input.scoreWeight,
     summary: exists
-      ? `${input.title} exists at a framework-appropriate path.`
+      ? contentSummary(matchedPath, input.feature, input.title)
       : `${input.title} is missing from the expected framework paths.`,
     evidence: {
       candidates,
       matchedPath: matchedPath ?? null,
-      exists
+      exists,
+      ...contentEvidence(matchedPath, input.feature)
     },
-    fixes: exists ? [] : [`Create ${input.title} in one of the expected framework paths.`],
+    fixes: exists
+      ? contentFixes(matchedPath, input.feature)
+      : [`Create ${input.title} in one of the expected framework paths.`],
     docs: ["https://isitagentready.com/"]
   };
+}
+
+function validateContents(filePath: string | undefined, feature: ProjectFeature): CheckResult["status"] {
+  if (!filePath) {
+    return "warn";
+  }
+
+  try {
+    const raw = readFileSync(filePath, "utf8");
+
+    switch (feature) {
+      case "robots":
+        return parseRobotsTxt(raw).isParseable ? "pass" : "warn";
+      case "sitemap": {
+        if (!filePath.endsWith(".xml")) {
+          return "pass";
+        }
+        return parseSitemapXml(raw).urls.length > 0 || parseSitemapXml(raw).sitemapUrls.length > 0 ? "pass" : "warn";
+      }
+      case "api-catalog":
+      case "mcp":
+      case "agent-card":
+      case "oauth-discovery":
+      case "oauth-protected-resource": {
+        if (!filePath.endsWith(".json")) {
+          return "pass";
+        }
+        return tryParseJson(raw) !== null ? "pass" : "warn";
+      }
+      case "llms":
+      case "markdown":
+        return raw.trim().length > 0 ? "pass" : "warn";
+      default:
+        return "pass";
+    }
+  } catch {
+    return "warn";
+  }
+}
+
+function contentSummary(filePath: string | undefined, feature: ProjectFeature, title: string): string {
+  if (!filePath) {
+    return `${title} is missing from the expected framework paths.`;
+  }
+
+  try {
+    const raw = readFileSync(filePath, "utf8");
+
+    switch (feature) {
+      case "robots": {
+        const parsed = parseRobotsTxt(raw);
+        return parsed.isParseable
+          ? `${title} exists and is parseable (${parsed.groups.length} groups, ${parsed.sitemapUrls.length} sitemaps).`
+          : `${title} exists but is not parseable.`;
+      }
+      case "sitemap": {
+        if (!filePath.endsWith(".xml")) {
+          return `${title} exists at a framework-appropriate path.`;
+        }
+        const parsed = parseSitemapXml(raw);
+        return parsed.urls.length > 0 || parsed.sitemapUrls.length > 0
+          ? `${title} exists and is parseable (${parsed.urls.length} URLs, ${parsed.sitemapUrls.length} nested).`
+          : `${title} exists but appears empty or unparseable.`;
+      }
+      case "api-catalog":
+      case "mcp":
+      case "agent-card":
+      case "oauth-discovery":
+      case "oauth-protected-resource": {
+        if (!filePath.endsWith(".json")) {
+          return `${title} exists at a framework-appropriate path.`;
+        }
+        return tryParseJson(raw) !== null
+          ? `${title} exists and contains valid JSON.`
+          : `${title} exists but contains invalid JSON.`;
+      }
+      case "llms":
+      case "markdown":
+        return raw.trim().length > 0
+          ? `${title} exists and contains content.`
+          : `${title} exists but is empty.`;
+      default:
+        return `${title} exists at a framework-appropriate path.`;
+    }
+  } catch {
+    return `${title} exists at a framework-appropriate path.`;
+  }
+}
+
+function contentEvidence(filePath: string | undefined, feature: ProjectFeature): Record<string, unknown> {
+  if (!filePath) {
+    return {};
+  }
+
+  try {
+    const raw = readFileSync(filePath, "utf8");
+
+    switch (feature) {
+      case "robots":
+        return { contentLength: raw.length, preview: raw.slice(0, 200) };
+      case "sitemap":
+        return { contentLength: raw.length, preview: raw.slice(0, 200) };
+      case "api-catalog":
+      case "mcp":
+      case "agent-card":
+      case "oauth-discovery":
+      case "oauth-protected-resource": {
+        if (!filePath.endsWith(".json")) {
+          return { contentLength: raw.length };
+        }
+        return { contentLength: raw.length, validJson: tryParseJson(raw) !== null };
+      }
+      case "llms":
+      case "markdown":
+        return { contentLength: raw.length, preview: raw.slice(0, 200) };
+      default:
+        return {};
+    }
+  } catch {
+    return {};
+  }
+}
+
+function contentFixes(filePath: string | undefined, feature: ProjectFeature): string[] {
+  if (!filePath) {
+    return [];
+  }
+
+  try {
+    const raw = readFileSync(filePath, "utf8");
+
+    switch (feature) {
+      case "robots": {
+        const parsed = parseRobotsTxt(raw);
+        return parsed.isParseable ? [] : ["Ensure robots.txt contains valid crawler directives."];
+      }
+      case "sitemap": {
+        const parsed = parseSitemapXml(raw);
+        return parsed.urls.length > 0 || parsed.sitemapUrls.length > 0
+          ? []
+          : ["Ensure the sitemap contains at least one URL or nested sitemap reference."];
+      }
+      case "api-catalog":
+      case "mcp":
+      case "agent-card":
+      case "oauth-discovery":
+      case "oauth-protected-resource": {
+        if (!filePath.endsWith(".json")) {
+          return [];
+        }
+        return tryParseJson(raw) !== null ? [] : ["Fix the JSON syntax in this file."];
+      }
+      case "llms":
+      case "markdown":
+        return raw.trim().length > 0 ? [] : ["Add content to this file."];
+      default:
+        return [];
+    }
+  } catch {
+    return [];
+  }
 }

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stefkec.github.io/agent-ready/config.schema.json",
+  "title": "agent-ready Config",
+  "description": "Configuration for the agent-ready CLI and library.",
+  "type": "object",
+  "properties": {
+    "defaults": {
+      "$ref": "#/$defs/CommandConfig"
+    },
+    "scan": {
+      "$ref": "#/$defs/CommandConfig"
+    },
+    "doctor": {
+      "$ref": "#/$defs/CommandConfig"
+    },
+    "init": {
+      "$ref": "#/$defs/ScaffoldConfig"
+    }
+  },
+  "$defs": {
+    "CommandConfig": {
+      "type": "object",
+      "properties": {
+        "output": {
+          "type": "string",
+          "enum": ["human", "json", "markdown"],
+          "default": "human",
+          "description": "Output format for scan and doctor commands."
+        },
+        "minScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum score to consider a scan or doctor pass. Below this threshold, exit code is 1."
+        },
+        "failOnStatuses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["pass", "warn", "fail", "not_applicable", "error"]
+          },
+          "description": "Check statuses that should trigger a failure exit code."
+        }
+      }
+    },
+    "ScaffoldConfig": {
+      "type": "object",
+      "properties": {
+        "output": {
+          "type": "string",
+          "enum": ["human", "json", "markdown"],
+          "default": "human",
+          "description": "Output format for scaffold commands."
+        },
+        "framework": {
+          "type": "string",
+          "enum": [
+            "next",
+            "nuxt",
+            "astro",
+            "sveltekit",
+            "vite-react",
+            "vite-vue",
+            "express",
+            "hono",
+            "unknown"
+          ],
+          "description": "Force a specific framework detection instead of auto-detecting."
+        },
+        "preset": {
+          "type": "string",
+          "enum": ["content-site", "application"],
+          "description": "Feature preset. content-site: robots, sitemap, llms, mcp, agent-card. application: api-catalog, robots, sitemap, llms, mcp, agent-card, oauth-discovery, oauth-protected-resource."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "api-catalog",
+              "robots",
+              "sitemap",
+              "llms",
+              "markdown",
+              "mcp",
+              "agent-card",
+              "oauth-discovery",
+              "oauth-protected-resource"
+            ]
+          },
+          "description": "Explicit list of features to scaffold. Overrides the preset."
+        },
+        "dryRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preview scaffold operations without writing files."
+        }
+      }
+    }
+  }
+}
