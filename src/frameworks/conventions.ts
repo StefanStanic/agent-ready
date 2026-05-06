@@ -93,6 +93,8 @@ function markdownRouteCandidates(cwd: string, framework: FrameworkName): string[
         join(cwd, "app", "llms.txt", "route.ts"),
         join(cwd, "src", "app", "llms.txt", "route.ts")
       ];
+    case "nuxt":
+      return [join(cwd, "server", "routes", "llms.txt.ts")];
     case "astro":
       return [join(cwd, "src", "pages", "llms.txt.ts")];
     case "sveltekit":
@@ -100,6 +102,9 @@ function markdownRouteCandidates(cwd: string, framework: FrameworkName): string[
     case "express":
     case "hono":
       return [join(cwd, "agent-ready.markdown.ts")];
+    case "vite-react":
+    case "vite-vue":
+      return [join(cwd, "agent-ready.vite.ts")];
     default:
       return [];
   }
@@ -121,10 +126,15 @@ function wellKnownRouteCandidates(
         join(cwd, "app", ".well-known", filename, "route.ts"),
         join(cwd, "src", "app", ".well-known", filename, "route.ts")
       ];
+    case "nuxt":
+      return [join(cwd, "server", "routes", ".well-known", `${filename}.ts`)];
     case "astro":
       return [join(cwd, "src", "pages", ".well-known", `${filename}.ts`)];
     case "sveltekit":
       return [join(cwd, "src", "routes", ".well-known", filename, "+server.ts")];
+    case "vite-react":
+    case "vite-vue":
+      return [join(cwd, "agent-ready.vite.ts")];
     default:
       return [];
   }
@@ -137,10 +147,15 @@ function apiCatalogRouteCandidates(cwd: string, framework: FrameworkName): strin
         join(cwd, "app", "openapi.json", "route.ts"),
         join(cwd, "src", "app", "openapi.json", "route.ts")
       ];
+    case "nuxt":
+      return [join(cwd, "server", "routes", "openapi.json.ts")];
     case "astro":
       return [join(cwd, "src", "pages", "openapi.json.ts")];
     case "sveltekit":
       return [join(cwd, "src", "routes", "openapi.json", "+server.ts")];
+    case "vite-react":
+    case "vite-vue":
+      return [join(cwd, "agent-ready.vite.ts")];
     default:
       return [];
   }

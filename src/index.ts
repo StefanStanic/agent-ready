@@ -11,6 +11,7 @@ export {
   validateAgentReadyConfig
 } from "./core/config-validation";
 export { renderScanResult, renderScaffoldResult } from "./reporters/human";
+export { renderScanResultMarkdown, renderScaffoldResultMarkdown } from "./reporters/markdown";
 export type {
   AgentReadyCommandConfig,
   AgentReadyConfig,

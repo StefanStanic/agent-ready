@@ -12,6 +12,7 @@ import type {
   ScaffoldFeature
 } from "./core/types";
 import { renderScanResult, renderScaffoldResult } from "./reporters/human";
+import { renderScanResultMarkdown, renderScaffoldResultMarkdown } from "./reporters/markdown";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -189,10 +190,10 @@ function printHelp(): void {
       "agent-ready",
       "",
       "Commands:",
-      "  agent-ready scan <url> [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
-      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--report-file <path>]",
-      "  agent-ready add <feature> [--cwd <path>] [--json] [--report-file <path>]",
-      "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
+      "  agent-ready scan <url> [--json] [--format human|json|markdown] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
+      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--format human|json|markdown] [--report-file <path>]",
+      "  agent-ready add <feature> [--cwd <path>] [--json] [--format human|json|markdown] [--report-file <path>]",
+      "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--format human|json|markdown] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
     ].join("\n")
   );
@@ -243,7 +244,8 @@ function optionExpectsValue(name: string): boolean {
     name === "--preset" ||
     name === "--report-file" ||
     name === "--min-score" ||
-    name === "--fail-on-status"
+    name === "--fail-on-status" ||
+    name === "--format"
   );
 }
 
@@ -263,6 +265,12 @@ function resolveOutputFormat(
   commandConfig?: AgentReadyCommandConfig | (AgentReadyScaffoldConfig & { output?: OutputFormat }),
   defaultConfig?: AgentReadyCommandConfig
 ): OutputFormat {
+  const format = readOption(args, "--format") as OutputFormat | undefined;
+
+  if (format && isValidFormat(format)) {
+    return format;
+  }
+
   if (hasFlag(args, "--json")) {
     return "json";
   }
@@ -270,12 +278,20 @@ function resolveOutputFormat(
   return commandConfig?.output ?? defaultConfig?.output ?? "human";
 }
 
+function isValidFormat(value: string): value is OutputFormat {
+  return value === "human" || value === "json" || value === "markdown";
+}
+
 function renderOutput(
   value: Parameters<typeof renderScanResult>[0],
-  format: "json" | "human"
+  format: OutputFormat
 ): string {
   if (format === "json") {
     return JSON.stringify(value, null, 2);
+  }
+
+  if (format === "markdown") {
+    return renderScanResultMarkdown(value);
   }
 
   return renderScanResult(value);
@@ -283,10 +299,14 @@ function renderOutput(
 
 function renderScaffoldOutputText(
   value: Parameters<typeof renderScaffoldResult>[0],
-  format: "json" | "human"
+  format: OutputFormat
 ): string {
   if (format === "json") {
     return JSON.stringify(value, null, 2);
+  }
+
+  if (format === "markdown") {
+    return renderScaffoldResultMarkdown(value);
   }
 
   return renderScaffoldResult(value);

@@ -131,6 +131,90 @@ describe("scaffoldProject", () => {
       join(cwd, "app", ".well-known", "oauth-authorization-server", "route.ts")
     );
   });
+
+  it("creates Nuxt Nitro server routes for agent-ready endpoints", async () => {
+    const cwd = createTempDir();
+
+    await scaffoldProject({
+      cwd,
+      framework: "nuxt",
+      features: [
+        "api-catalog",
+        "sitemap",
+        "llms",
+        "mcp",
+        "agent-card",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ]
+    });
+
+    expect(readFileSync(join(cwd, "server", "routes", "openapi.json.ts"), "utf8")).toContain(
+      "defineEventHandler"
+    );
+    expect(readFileSync(join(cwd, "server", "routes", "openapi.json.ts"), "utf8")).toContain("Example API");
+    expect(readFileSync(join(cwd, "server", "routes", "sitemap.xml.ts"), "utf8")).toContain(
+      "defineEventHandler"
+    );
+    expect(readFileSync(join(cwd, "server", "routes", "llms.txt.ts"), "utf8")).toContain(
+      "text/markdown"
+    );
+    expect(readFileSync(join(cwd, "server", "routes", ".well-known", "mcp.json.ts"), "utf8")).toContain(
+      "example-mcp-server"
+    );
+    expect(
+      readFileSync(join(cwd, "server", "routes", ".well-known", "agent.json.ts"), "utf8")
+    ).toContain("example-agent");
+    expect(
+      readFileSync(
+        join(cwd, "server", "routes", ".well-known", "oauth-authorization-server.ts"),
+        "utf8"
+      )
+    ).toContain("authorization_endpoint");
+    expect(
+      readFileSync(
+        join(cwd, "server", "routes", ".well-known", "oauth-protected-resource.ts"),
+        "utf8"
+      )
+    ).toContain("authorization_servers");
+  });
+
+  it("creates Vite plugin scaffold for vite-react with all routes", async () => {
+    const cwd = createTempDir();
+
+    await scaffoldProject({
+      cwd,
+      framework: "vite-react",
+      features: [
+        "api-catalog",
+        "mcp",
+        "agent-card",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ]
+    });
+
+    const pluginPath = join(cwd, "agent-ready.vite.ts");
+    expect(readFileSync(pluginPath, "utf8")).toContain("agentReadyVitePlugin");
+    expect(readFileSync(pluginPath, "utf8")).toContain("example-mcp-server");
+    expect(readFileSync(pluginPath, "utf8")).toContain("authorization_endpoint");
+    expect(readFileSync(pluginPath, "utf8")).toContain("configureServer");
+  });
+
+  it("creates Vite plugin scaffold for vite-vue with all routes", async () => {
+    const cwd = createTempDir();
+
+    await scaffoldProject({
+      cwd,
+      framework: "vite-vue",
+      features: ["api-catalog"]
+    });
+
+    const pluginPath = join(cwd, "agent-ready.vite.ts");
+    expect(readFileSync(pluginPath, "utf8")).toContain("agentReadyVitePlugin");
+    expect(readFileSync(pluginPath, "utf8")).toContain("configureServer");
+    expect(readFileSync(pluginPath, "utf8")).toContain("openapiPayload");
+  });
 });
 
 function createTempDir(): string {

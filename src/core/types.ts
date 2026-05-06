@@ -58,7 +58,7 @@ export type ScanFailureResult = {
   reasons: string[];
 };
 
-export type OutputFormat = "human" | "json";
+export type OutputFormat = "human" | "json" | "markdown";
 
 export type FrameworkName =
   | "next"

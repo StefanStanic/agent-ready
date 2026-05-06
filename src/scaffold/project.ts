@@ -187,6 +187,16 @@ function apiCatalogScaffold(cwd: string, framework: FrameworkName): ScaffoldFile
           "}"
         ].join("\n")
       };
+    case "nuxt":
+      return {
+        path: join(cwd, "server", "routes", "openapi.json.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export default defineEventHandler(() => payload);",
+          ""
+        ].join("\n")
+      };
     case "astro":
       return {
         path: join(cwd, "src", "pages", "openapi.json.ts"),
@@ -209,6 +219,9 @@ function apiCatalogScaffold(cwd: string, framework: FrameworkName): ScaffoldFile
           "}"
         ].join("\n")
       };
+    case "vite-react":
+    case "vite-vue":
+      return vitePluginScaffold(cwd);
     default:
       return {
         path: join(cwd, "openapi.json"),
@@ -234,6 +247,20 @@ function sitemapScaffold(cwd: string, framework: FrameworkName): ScaffoldFile {
           "    }",
           "  ];",
           "}"
+        ].join("\n")
+      };
+    case "nuxt":
+      return {
+        path: join(cwd, "server", "routes", "sitemap.xml.ts"),
+        contents: [
+          "export default defineEventHandler((event) => {",
+          "  setHeader(event, 'Content-Type', 'application/xml; charset=utf-8');",
+          "  return `<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
+          "  <url><loc>https://example.com/</loc></url>",
+          "</urlset>`;",
+          "});",
+          ""
         ].join("\n")
       };
     case "astro":
@@ -270,6 +297,18 @@ function llmsScaffold(cwd: string, framework: FrameworkName): ScaffoldFile {
   switch (framework) {
     case "next":
       return markdownScaffold(cwd, framework)!;
+    case "nuxt":
+      return {
+        path: join(cwd, "server", "routes", "llms.txt.ts"),
+        contents: [
+          "export default defineEventHandler((event) => {",
+          "  setHeader(event, 'Content-Type', 'text/markdown; charset=utf-8');",
+          "  setHeader(event, 'Vary', 'Accept');",
+          "  return '# Agent-ready site\\n\\n- Home: https://example.com/';",
+          "});",
+          ""
+        ].join("\n")
+      };
     case "astro":
       return {
         path: join(cwd, "src", "pages", "llms.txt.ts"),
@@ -322,6 +361,8 @@ function markdownScaffold(cwd: string, framework: FrameworkName): ScaffoldFile |
           "}"
         ].join("\n")
       };
+    case "nuxt":
+      return llmsScaffold(cwd, framework);
     case "astro":
       return llmsScaffold(cwd, framework);
     case "sveltekit":
@@ -405,6 +446,16 @@ function wellKnownScaffold(
           "}"
         ].join("\n")
       };
+    case "nuxt":
+      return {
+        path: join(cwd, "server", "routes", ".well-known", `${filename}.ts`),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export default defineEventHandler(() => payload);",
+          ""
+        ].join("\n")
+      };
     case "astro":
       return {
         path: join(cwd, "src", "pages", ".well-known", `${filename}.ts`),
@@ -427,6 +478,9 @@ function wellKnownScaffold(
           "}"
         ].join("\n")
       };
+    case "vite-react":
+    case "vite-vue":
+      return vitePluginScaffold(cwd);
     default:
       return {
         path: join(resolveStaticRoot(cwd, framework), ".well-known", filename),
@@ -482,6 +536,16 @@ function wellKnownJsonScaffold(
           "}"
         ].join("\n")
       };
+    case "nuxt":
+      return {
+        path: join(cwd, "server", "routes", ".well-known", `${filename}.ts`),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export default defineEventHandler(() => payload);",
+          ""
+        ].join("\n")
+      };
     case "astro":
       return {
         path: join(cwd, "src", "pages", ".well-known", `${filename}.ts`),
@@ -504,6 +568,9 @@ function wellKnownJsonScaffold(
           "}"
         ].join("\n")
       };
+    case "vite-react":
+    case "vite-vue":
+      return vitePluginScaffold(cwd);
     default:
       return {
         path: join(resolveStaticRoot(cwd, framework), ".well-known", filename),
@@ -521,6 +588,70 @@ function staticSitemapXml(): string {
     "  </url>",
     "</urlset>"
   ].join("\n");
+}
+
+function vitePluginScaffold(cwd: string): ScaffoldFile {
+  return {
+    path: join(cwd, "agent-ready.vite.ts"),
+    contents: [
+      "import type { Plugin } from 'vite';",
+      "",
+      "const openapiPayload = " + JSON.stringify({
+        openapi: "3.1.0",
+        info: { title: "Example API", version: "1.0.0" },
+        paths: { "/health": { get: { summary: "Health check", responses: { "200": { description: "OK" } } } } }
+      }) + ";",
+      "",
+      "const mcpPayload = " + JSON.stringify({
+        name: "example-mcp-server",
+        description: "Machine-readable MCP server card.",
+        url: "https://example.com",
+        version: "0.1.0"
+      }) + ";",
+      "",
+      "const agentPayload = " + JSON.stringify({
+        name: "example-agent",
+        description: "Agent card placeholder.",
+        url: "https://example.com"
+      }) + ";",
+      "",
+      "const oauthServerPayload = " + JSON.stringify({
+        issuer: "https://example.com",
+        authorization_endpoint: "https://example.com/oauth/authorize",
+        token_endpoint: "https://example.com/oauth/token",
+        jwks_uri: "https://example.com/.well-known/jwks.json"
+      }) + ";",
+      "",
+      "const oauthResourcePayload = " + JSON.stringify({
+        resource: "https://api.example.com",
+        authorization_servers: ["https://example.com"],
+        scopes_supported: ["read"]
+      }) + ";",
+      "",
+      "const routes: Record<string, unknown> = {",
+      "  '/openapi.json': openapiPayload,",
+      "  '/.well-known/mcp.json': mcpPayload,",
+      "  '/.well-known/agent.json': agentPayload,",
+      "  '/.well-known/oauth-authorization-server': oauthServerPayload,",
+      "  '/.well-known/oauth-protected-resource': oauthResourcePayload",
+      "};",
+      "",
+      "export function agentReadyVitePlugin(): Plugin {",
+      "  return {",
+      "    name: 'agent-ready',",
+      "    configureServer(server) {",
+      "      for (const [path, payload] of Object.entries(routes)) {",
+      "        server.middlewares.use(path, (_req, res) => {",
+      "          res.setHeader('Content-Type', 'application/json');",
+      "          res.end(JSON.stringify(payload, null, 2));",
+      "        });",
+      "      }",
+      "    }",
+      "  };",
+      "}",
+      ""
+    ].join("\n")
+  };
 }
 
 function preview(input: string): string {
