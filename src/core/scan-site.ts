@@ -11,6 +11,7 @@ import { checkLinkHeaders } from "../checks/discoverability/link-headers";
 import { checkRobotsTxt } from "../checks/discoverability/robots-txt";
 import { checkSitemap } from "../checks/discoverability/sitemap";
 import { summarizeScores } from "./checks";
+import { RESULT_SCHEMA_VERSION } from "./schema";
 import type { ScanResult, ScanSiteOptions } from "./types";
 
 export async function scanSite(options: ScanSiteOptions): Promise<ScanResult> {
@@ -32,6 +33,7 @@ export async function scanSite(options: ScanSiteOptions): Promise<ScanResult> {
   const summary = summarizeScores(checks);
 
   return {
+    schemaVersion: RESULT_SCHEMA_VERSION,
     target: baseUrl.toString(),
     mode: "site",
     score: summary.score,

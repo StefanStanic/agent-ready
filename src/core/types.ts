@@ -39,6 +39,7 @@ export type ScanSiteOptions = {
 };
 
 export type ScanResult = {
+  schemaVersion: string;
   target: string;
   mode: "site" | "project";
   score: number;
@@ -83,8 +84,10 @@ export type ScaffoldFeature =
   | "agent-card";
 
 export type ScaffoldOperation = {
+  existingPreview?: string;
+  generatedPreview?: string;
   path: string;
-  status: "create" | "skip";
+  status: "conflict" | "create" | "skip";
   reason: string;
 };
 
@@ -100,4 +103,5 @@ export type ScaffoldProjectResult = {
   cwd: string;
   framework: FrameworkDetection;
   operations: ScaffoldOperation[];
+  schemaVersion: string;
 };

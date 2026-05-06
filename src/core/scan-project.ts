@@ -1,31 +1,62 @@
 import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { summarizeScores } from "./checks";
 import type { CheckResult, ScanProjectOptions, ScanProjectResult } from "./types";
 import { detectFramework } from "../frameworks/detect";
+import { resolveFeatureCandidates, type ProjectFeature } from "../frameworks/conventions";
+import { RESULT_SCHEMA_VERSION } from "./schema";
 
 export async function scanProject(options: ScanProjectOptions = {}): Promise<ScanProjectResult> {
   const cwd = options.cwd ?? process.cwd();
   const framework = detectFramework({ cwd });
   const checks: CheckResult[] = [
-    localFileCheck({
+    projectFeatureCheck(cwd, framework.framework, {
       id: "robots-txt",
+      feature: "robots",
       title: "robots.txt",
       category: "discoverability",
-      scoreWeight: 5,
-      expectedPath: resolveStaticPath(cwd, framework.framework, "robots.txt")
+      scoreWeight: 5
     }),
-    localFileCheck({
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "sitemap",
+      feature: "sitemap",
+      title: "Sitemap",
+      category: "discoverability",
+      scoreWeight: 5
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "llms-txt",
+      feature: "llms",
+      title: "llms.txt",
+      category: "content-accessibility",
+      scoreWeight: 5
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "markdown-route",
+      feature: "markdown",
+      title: "Markdown Route Support",
+      category: "content-accessibility",
+      scoreWeight: 5,
+      emptyCandidatesStatus: "not_applicable"
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
       id: "mcp-server-card",
+      feature: "mcp",
       title: "MCP Server Card",
       category: "discovery",
-      scoreWeight: 8,
-      expectedPath: resolveStaticPath(cwd, framework.framework, ".well-known/mcp.json")
+      scoreWeight: 8
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "a2a-agent-card",
+      feature: "agent-card",
+      title: "A2A Agent Card",
+      category: "discovery",
+      scoreWeight: 6
     })
   ];
   const summary = summarizeScores(checks);
 
   return {
+    schemaVersion: RESULT_SCHEMA_VERSION,
     target: cwd,
     cwd,
     mode: "project",
@@ -34,33 +65,45 @@ export async function scanProject(options: ScanProjectOptions = {}): Promise<Sca
     categoryScores: summary.categoryScores,
     checks,
     warnings: framework.framework === "unknown" ? ["Framework was not detected."] : [],
-    fileSignals: checks.map((check) => String(check.evidence.path))
+    fileSignals: checks.flatMap((check) => {
+      const candidates = check.evidence.candidates;
+      return Array.isArray(candidates) ? candidates.map(String) : [];
+    })
   };
 }
 
-function resolveStaticPath(cwd: string, framework: string, relativePath: string): string {
-  switch (framework) {
-    case "next":
-    case "nuxt":
-    case "vite-react":
-    case "vite-vue":
-    case "astro":
-      return join(cwd, "public", relativePath);
-    case "sveltekit":
-      return join(cwd, "static", relativePath);
-    default:
-      return join(cwd, relativePath);
-  }
-}
-
-function localFileCheck(input: {
+function projectFeatureCheck(
+  cwd: string,
+  framework: ScanProjectResult["framework"]["framework"],
+  input: {
   id: string;
+  feature: ProjectFeature;
   title: string;
   category: CheckResult["category"];
   scoreWeight: number;
-  expectedPath: string;
+  emptyCandidatesStatus?: CheckResult["status"];
 }): CheckResult {
-  const exists = existsSync(input.expectedPath);
+  const candidates = resolveFeatureCandidates(cwd, framework, input.feature);
+  const matchedPath = candidates.find((candidate) => existsSync(candidate));
+  const exists = Boolean(matchedPath);
+
+  if (candidates.length === 0) {
+    return {
+      id: input.id,
+      title: input.title,
+      category: input.category,
+      status: input.emptyCandidatesStatus ?? "warn",
+      scoreWeight: input.scoreWeight,
+      summary: `${input.title} is not mapped for framework ${framework}.`,
+      evidence: {
+        candidates: [],
+        matchedPath: null,
+        exists: false
+      },
+      fixes: [`Add ${input.title} support rules for framework ${framework}.`],
+      docs: ["https://isitagentready.com/"]
+    };
+  }
 
   return {
     id: input.id,
@@ -69,13 +112,14 @@ function localFileCheck(input: {
     status: exists ? "pass" : "warn",
     scoreWeight: input.scoreWeight,
     summary: exists
-      ? `${input.title} exists at the expected path.`
-      : `${input.title} is missing from the expected path.`,
+      ? `${input.title} exists at a framework-appropriate path.`
+      : `${input.title} is missing from the expected framework paths.`,
     evidence: {
-      path: input.expectedPath,
+      candidates,
+      matchedPath: matchedPath ?? null,
       exists
     },
-    fixes: exists ? [] : [`Create ${input.expectedPath}.`],
+    fixes: exists ? [] : [`Create ${input.title} in one of the expected framework paths.`],
     docs: ["https://isitagentready.com/"]
   };
 }

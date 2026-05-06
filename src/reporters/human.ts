@@ -2,6 +2,7 @@ import type { CheckResult, ScanResult, ScaffoldProjectResult } from "../core/typ
 
 export function renderScanResult(result: ScanResult): string {
   const lines = [
+    `Schema Version: ${result.schemaVersion}`,
     `Target: ${result.target}`,
     `Mode: ${result.mode}`,
     `Score: ${result.score}/100`,
@@ -38,6 +39,7 @@ export function renderScanResult(result: ScanResult): string {
 
 export function renderScaffoldResult(result: ScaffoldProjectResult): string {
   const lines = [
+    `Schema Version: ${result.schemaVersion}`,
     `Project: ${result.cwd}`,
     `Framework: ${result.framework.framework}`,
     ""
@@ -48,14 +50,44 @@ export function renderScaffoldResult(result: ScaffoldProjectResult): string {
   for (const operation of result.operations) {
     lines.push(`  ${operation.status.toUpperCase()} ${operation.path}`);
     lines.push(`    ${operation.reason}`);
+
+    if (operation.status === "conflict") {
+      if (operation.existingPreview) {
+        lines.push("    Existing preview:");
+        lines.push(indent(operation.existingPreview, 6));
+      }
+
+      if (operation.generatedPreview) {
+        lines.push("    Generated preview:");
+        lines.push(indent(operation.generatedPreview, 6));
+      }
+    }
   }
 
   return lines.join("\n");
 }
 
 function renderCheck(check: CheckResult): string {
-  return [
+  const lines = [
     `  [${check.status.toUpperCase()}] ${check.title}`,
     `    ${check.summary}`
-  ].join("\n");
+  ];
+
+  if (check.status !== "pass" && check.fixes.length > 0) {
+    lines.push("    Suggested fixes:");
+
+    for (const fix of check.fixes) {
+      lines.push(`      - ${fix}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function indent(input: string, spaces: number): string {
+  const prefix = " ".repeat(spaces);
+  return input
+    .split("\n")
+    .map((line) => `${prefix}${line}`)
+    .join("\n");
 }
