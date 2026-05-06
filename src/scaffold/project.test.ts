@@ -112,6 +112,25 @@ describe("scaffoldProject", () => {
     expect(result.operations[0]?.existingPreview).toContain("Disallow: /");
     expect(result.operations[0]?.generatedPreview).toContain("Content-Signal:");
   });
+
+  it("uses the application preset when requested", async () => {
+    const cwd = createTempDir();
+
+    const result = await scaffoldProject({
+      cwd,
+      framework: "next",
+      preset: "application"
+    });
+
+    const createdPaths = result.operations
+      .filter((operation) => operation.status === "create")
+      .map((operation) => operation.path);
+
+    expect(createdPaths).toContain(join(cwd, "app", "openapi.json", "route.ts"));
+    expect(createdPaths).toContain(
+      join(cwd, "app", ".well-known", "oauth-authorization-server", "route.ts")
+    );
+  });
 });
 
 function createTempDir(): string {

@@ -26,6 +26,9 @@ describe("loadAgentReadyConfig", () => {
           defaults: {
             output: "json"
           },
+          init: {
+            preset: "application"
+          },
           scan: {
             minScore: 70
           }
@@ -39,6 +42,7 @@ describe("loadAgentReadyConfig", () => {
     const config = await loadAgentReadyConfig(cwd);
 
     expect(config.defaults?.output).toBe("json");
+    expect(config.init?.preset).toBe("application");
     expect(config.scan?.minScore).toBe(70);
   });
 

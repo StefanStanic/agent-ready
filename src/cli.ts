@@ -66,10 +66,14 @@ async function runDoctor(args: string[]): Promise<void> {
 async function runInit(args: string[]): Promise<void> {
   const config = await loadAgentReadyConfig(process.cwd());
   const framework = (readOption(args, "--framework") as FrameworkName | undefined) ?? config.init?.framework;
+  const preset =
+    (readOption(args, "--preset") as "content-site" | "application" | undefined) ??
+    config.init?.preset;
   const dryRun = hasFlag(args, "--dry-run") || config.init?.dryRun === true;
   const result = await scaffoldProject({
     features: config.init?.features,
     framework,
+    preset,
     dryRun
   });
   printScaffoldOutput(result, resolveOutputFormat(args, config.init));
@@ -180,7 +184,7 @@ function printHelp(): void {
       "",
       "Commands:",
       "  agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]",
-      "  agent-ready init [--framework <name>] [--dry-run] [--json]",
+      "  agent-ready init [--framework <name>] [--preset <name>] [--dry-run] [--json]",
       "  agent-ready add <feature> [--json]",
       "  agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
@@ -226,7 +230,12 @@ function parseStatuses(input: string): CheckStatus[] {
 }
 
 function optionExpectsValue(name: string): boolean {
-  return name === "--framework" || name === "--min-score" || name === "--fail-on-status";
+  return (
+    name === "--framework" ||
+    name === "--preset" ||
+    name === "--min-score" ||
+    name === "--fail-on-status"
+  );
 }
 
 function resolveOutputFormat(

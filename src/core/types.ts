@@ -131,6 +131,7 @@ export type AgentReadyScaffoldConfig = {
   dryRun?: boolean;
   features?: ScaffoldFeature[];
   framework?: FrameworkName;
+  preset?: "content-site" | "application";
 };
 
 export type AgentReadyConfig = {

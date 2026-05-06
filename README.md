@@ -26,7 +26,7 @@ npx agent-ready scan https://example.com
 ```bash
 agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]
 agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready init [--framework <name>] [--dry-run] [--json]
+agent-ready init [--framework <name>] [--preset <name>] [--dry-run] [--json]
 agent-ready add <feature> [--json]
 agent-ready explain <check>
 ```
@@ -55,6 +55,12 @@ Scaffold a Next.js project:
 
 ```bash
 npx agent-ready init --framework next
+```
+
+Scaffold an application-style project:
+
+```bash
+npx agent-ready init --framework express --preset application
 ```
 
 Add only an MCP server card scaffold:
@@ -88,12 +94,25 @@ Example:
   },
   "init": {
     "framework": "next",
+    "preset": "content-site",
     "features": ["api-catalog", "robots", "sitemap", "llms", "mcp"]
   }
 }
 ```
 
 Config is optional. CLI flags still take precedence.
+
+## Presets
+
+- `content-site`
+  Intended for marketing sites, docs sites, and content-heavy apps.
+- `application`
+  Intended for API-capable apps and authenticated products.
+
+Default behavior:
+
+- `next`, `astro`, `sveltekit`, `nuxt`, `vite-react`, and `vite-vue` default to `content-site`
+- `express` and `hono` default to `application`
 
 ## Supported scaffold features
 

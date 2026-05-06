@@ -23,7 +23,8 @@ export async function scaffoldProject(
     confidence: options.framework ? 1 : detected.confidence,
     reasons: options.framework ? [`Framework forced to ${options.framework}.`] : detected.reasons
   };
-  const features = options.features ?? ["robots", "sitemap", "llms", "mcp"];
+  const preset = options.preset ?? defaultPresetForFramework(framework.framework);
+  const features = options.features ?? featuresForPreset(preset);
   const operations: ScaffoldOperation[] = [];
 
   for (const feature of features) {
@@ -78,6 +79,36 @@ export async function scaffoldProject(
     operations,
     schemaVersion: RESULT_SCHEMA_VERSION
   };
+}
+
+function defaultPresetForFramework(framework: FrameworkName): "content-site" | "application" {
+  switch (framework) {
+    case "express":
+    case "hono":
+      return "application";
+    default:
+      return "content-site";
+  }
+}
+
+function featuresForPreset(
+  preset: "content-site" | "application"
+): ScaffoldFeature[] {
+  switch (preset) {
+    case "application":
+      return [
+        "api-catalog",
+        "robots",
+        "sitemap",
+        "llms",
+        "mcp",
+        "agent-card",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ];
+    case "content-site":
+      return ["robots", "sitemap", "llms", "mcp", "agent-card"];
+  }
 }
 
 function scaffoldFileForFeature(
