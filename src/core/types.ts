@@ -48,6 +48,16 @@ export type ScanResult = {
   warnings: string[];
 };
 
+export type ScanFailureOptions = {
+  failOnStatuses?: CheckStatus[];
+  minScore?: number;
+};
+
+export type ScanFailureResult = {
+  failed: boolean;
+  reasons: string[];
+};
+
 export type FrameworkName =
   | "next"
   | "nuxt"

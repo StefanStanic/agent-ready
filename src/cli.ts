@@ -1,5 +1,6 @@
 import { explainCheck, scanProject, scanSite, scaffoldProject } from "./index";
-import type { FrameworkName, ScaffoldFeature } from "./core/types";
+import { evaluateScanFailure } from "./core/evaluate";
+import type { CheckStatus, FrameworkName, ScaffoldFeature } from "./core/types";
 import { renderScanResult, renderScaffoldResult } from "./reporters/human";
 
 async function main(): Promise<void> {
@@ -34,7 +35,7 @@ async function main(): Promise<void> {
 }
 
 async function runScan(args: string[]): Promise<void> {
-  const url = args[0];
+  const url = readPositional(args, 0);
 
   if (!url) {
     throw new Error("Usage: agent-ready scan <url>");
@@ -42,12 +43,14 @@ async function runScan(args: string[]): Promise<void> {
 
   const report = await scanSite({ url });
   printOutput(report, hasFlag(args, "--json") ? "json" : "human");
+  applyFailurePolicy(report, args);
 }
 
 async function runDoctor(args: string[]): Promise<void> {
-  const cwd = args[0];
+  const cwd = readPositional(args, 0);
   const report = await scanProject({ cwd });
   printOutput(report, hasFlag(args, "--json") ? "json" : "human");
+  applyFailurePolicy(report, args);
 }
 
 async function runInit(args: string[]): Promise<void> {
@@ -61,7 +64,7 @@ async function runInit(args: string[]): Promise<void> {
 }
 
 async function runAdd(args: string[]): Promise<void> {
-  const feature = args[0] as ScaffoldFeature | undefined;
+  const feature = readPositional(args, 0) as ScaffoldFeature | undefined;
 
   if (!feature) {
     throw new Error("Usage: agent-ready add <feature>");
@@ -103,6 +106,32 @@ function readOption(args: string[], name: string): string | undefined {
   return args[index + 1];
 }
 
+function readPositional(args: string[], position: number): string | undefined {
+  const positionals: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const value = args[index];
+
+    if (!value) {
+      continue;
+    }
+
+    if (value.startsWith("--")) {
+      const next = args[index + 1];
+
+      if (next && !next.startsWith("--") && optionExpectsValue(value)) {
+        index += 1;
+      }
+
+      continue;
+    }
+
+    positionals.push(value);
+  }
+
+  return positionals[position];
+}
+
 function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
@@ -137,13 +166,50 @@ function printHelp(): void {
       "agent-ready",
       "",
       "Commands:",
-      "  agent-ready scan <url> [--json]",
+      "  agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready init [--framework <name>] [--dry-run] [--json]",
       "  agent-ready add <feature> [--json]",
-      "  agent-ready doctor [cwd] [--json]",
+      "  agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
     ].join("\n")
   );
+}
+
+function applyFailurePolicy(
+  result: Parameters<typeof evaluateScanFailure>[0],
+  args: string[]
+): void {
+  const minScore = readOption(args, "--min-score");
+  const failOnStatus = readOption(args, "--fail-on-status");
+  const evaluation = evaluateScanFailure(result, {
+    minScore: minScore ? Number(minScore) : undefined,
+    failOnStatuses: failOnStatus ? parseStatuses(failOnStatus) : undefined
+  });
+
+  if (!evaluation.failed) {
+    return;
+  }
+
+  for (const reason of evaluation.reasons) {
+    console.error(reason);
+  }
+
+  process.exitCode = 1;
+}
+
+function parseStatuses(input: string): CheckStatus[] {
+  const allowedStatuses: CheckStatus[] = ["pass", "warn", "fail", "not_applicable", "error"];
+
+  return input
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value): value is CheckStatus =>
+      allowedStatuses.includes(value as CheckStatus)
+    );
+}
+
+function optionExpectsValue(name: string): boolean {
+  return name === "--framework" || name === "--min-score" || name === "--fail-on-status";
 }
 
 main().catch((error) => {

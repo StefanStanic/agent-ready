@@ -3,6 +3,7 @@ export { scanProject } from "./core/scan-project";
 export { detectFramework } from "./frameworks/detect";
 export { scaffoldProject } from "./scaffold/project";
 export { explainCheck } from "./core/explain-check";
+export { evaluateScanFailure } from "./core/evaluate";
 export { renderScanResult, renderScaffoldResult } from "./reporters/human";
 export type {
   CategoryScoreMap,
@@ -10,6 +11,8 @@ export type {
   CheckResult,
   CheckStatus,
   FrameworkDetection,
+  ScanFailureOptions,
+  ScanFailureResult,
   ScanProjectOptions,
   ScanProjectResult,
   ScanResult,
