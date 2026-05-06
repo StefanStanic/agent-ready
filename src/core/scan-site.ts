@@ -12,6 +12,10 @@ import { checkWebMcp } from "../checks/discovery/webmcp";
 import { checkLinkHeaders } from "../checks/discoverability/link-headers";
 import { checkRobotsTxt } from "../checks/discoverability/robots-txt";
 import { checkSitemap } from "../checks/discoverability/sitemap";
+import { checkAcp } from "../checks/commerce/acp";
+import { checkMpp } from "../checks/commerce/mpp";
+import { checkUcp } from "../checks/commerce/ucp";
+import { checkX402 } from "../checks/commerce/x402";
 import { summarizeScores } from "./checks";
 import { RESULT_SCHEMA_VERSION } from "./schema";
 import type { ScanResult, ScanSiteOptions } from "./types";
@@ -32,7 +36,11 @@ export async function scanSite(options: ScanSiteOptions): Promise<ScanResult> {
     checkAgentSkills(baseUrl),
     checkWebMcp(baseUrl),
     checkOauthDiscovery(baseUrl),
-    checkOauthProtectedResource(baseUrl)
+    checkOauthProtectedResource(baseUrl),
+    checkX402(baseUrl),
+    checkMpp(baseUrl),
+    checkUcp(baseUrl),
+    checkAcp(baseUrl)
   ]);
   const summary = summarizeScores(checks);
 

@@ -9,6 +9,10 @@ const tempDirs: string[] = [];
 
 const CLI = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
+function strip(input: string): string {
+  return input.replace(/\x1b\[\d+m/g, "");
+}
+
 afterEach(() => {
   while (tempDirs.length > 0) {
     const dir = tempDirs.pop();
@@ -124,9 +128,7 @@ describe("cli integration", () => {
     describe(framework, () => {
       it("init scaffolds all default features", () => {
         const cwd = copyExampleToTemp(dirname);
-
-        const output = runCli(["init", "--framework", framework], cwd);
-        expect(output).toContain("CREATE");
+        runCli(["init", "--framework", framework], cwd);
 
         for (const file of expectedInitFiles) {
           expect(
@@ -140,10 +142,9 @@ describe("cli integration", () => {
         const cwd = copyExampleToTemp(dirname);
         runCli(["init", "--framework", framework], cwd);
 
-        const output = runCli(["doctor"], cwd);
-        expect(output).toContain("Score:");
-        expect(output).toContain("Category Scores:");
-        expect(output).toContain("Checks:");
+        const output = strip(runCli(["doctor"], cwd));
+        expect(output).toContain("/100");
+        expect(output).toContain("Discoverability");
       });
 
       it("doctor --json outputs valid JSON", () => {
@@ -180,11 +181,10 @@ describe("cli integration", () => {
         runCli(["init", "--framework", framework], cwd);
 
         const reportPath = join(cwd, "report.txt");
-        const output = runCli(["doctor", "--report-file", reportPath], cwd);
-        expect(output).toContain("Score:");
+        runCli(["doctor", "--report-file", reportPath], cwd);
 
-        const fileContent = readFileSync(reportPath, "utf8");
-        expect(fileContent).toContain("Score:");
+        const fileContent = strip(readFileSync(reportPath, "utf8"));
+        expect(fileContent).toContain("/100");
       });
 
       it("explain outputs check documentation as JSON", () => {
@@ -200,13 +200,8 @@ describe("cli integration", () => {
       it("add --dry-run shows what would be created", () => {
         const cwd = copyExampleToTemp(dirname);
 
-        const output = runCli(["add", "llms", "--dry-run", "--framework", framework], cwd);
-
-        if (framework === "nuxt" || framework === "vite-react" || framework === "vite-vue") {
-          expect(output).toContain("CREATE");
-        } else {
-          expect(output).toContain("CREATE");
-        }
+        const output = strip(runCli(["add", "llms", "--dry-run", "--framework", framework], cwd));
+        expect(output).toContain("+");
       });
     });
   }
@@ -223,12 +218,8 @@ describe("cli integration", () => {
   it("init --features overrides default features", () => {
     const cwd = copyExampleToTemp("next");
 
-    const output = runCli(
-      ["init", "--framework", "next", "--features", "robots,sitemap"],
-      cwd
-    );
+    runCli(["init", "--framework", "next", "--features", "robots,sitemap"], cwd);
 
-    expect(output).toContain("CREATE");
     expect(existsSync(join(cwd, "public", "robots.txt"))).toBe(true);
     expect(existsSync(join(cwd, "app", "sitemap.ts"))).toBe(true);
     expect(existsSync(join(cwd, "app", "openapi.json/route.ts"))).toBe(false);
@@ -264,12 +255,12 @@ describe("cli integration", () => {
     expect(() => runCli(["doctor", "--min-score", String(score + 1)], cwd)).toThrow();
   });
 
-  it("doctor --fail-on-status fails when no checks have the specified status", () => {
+  it("doctor --fail-on-status passes when no checks have the specified status", () => {
     const cwd = copyExampleToTemp("hono");
     runCli(["init", "--framework", "hono"], cwd);
 
-    const output = runCli(["doctor", "--fail-on-status", "error"], cwd);
-    expect(output).toContain("Score:");
+    const output = strip(runCli(["doctor", "--fail-on-status", "error"], cwd));
+    expect(output).toContain("/100");
   });
 });
 

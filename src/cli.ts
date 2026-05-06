@@ -11,6 +11,7 @@ import type {
   OutputFormat,
   ScaffoldFeature
 } from "./core/types";
+import type { CheckDefinition } from "./core/types";
 import { renderScanResult, renderScaffoldResult } from "./reporters/human";
 import { renderScanResultMarkdown, renderScaffoldResultMarkdown } from "./reporters/markdown";
 import { interactiveWizard } from "./scaffold/wizard";
@@ -38,6 +39,15 @@ async function main(): Promise<void> {
     case "-h":
     case undefined:
       printHelp();
+      return;
+    case "--list-features":
+      printFeatures();
+      return;
+    case "--list-frameworks":
+      printFrameworks();
+      return;
+    case "--list-checks":
+      printChecks();
       return;
     default:
       console.error(`Unknown command: ${command}`);
@@ -320,6 +330,83 @@ function renderScaffoldOutputText(
   }
 
   return renderScaffoldResult(value);
+}
+
+function printFeatures(): void {
+  console.log(
+    [
+      "Scaffoldable features:",
+      "",
+      "  api-catalog              OpenAPI/Swagger document",
+      "  robots                   robots.txt with AI bot rules",
+      "  sitemap                  XML sitemap",
+      "  llms                     llms.txt markdown file",
+      "  markdown                 Markdown content negotiation route",
+      "  mcp                      MCP server card (/.well-known/mcp.json)",
+      "  agent-card               A2A agent card (/.well-known/agent.json)",
+      "  oauth-discovery          OAuth authorization server metadata",
+      "  oauth-protected-resource OAuth protected resource metadata"
+    ].join("\n")
+  );
+}
+
+function printFrameworks(): void {
+  console.log(
+    [
+      "Supported frameworks:",
+      "",
+      "  next         Next.js (App Router)",
+      "  nuxt         Nuxt 3 (Nitro server routes)",
+      "  astro        Astro (pages + static)",
+      "  sveltekit    SvelteKit (server routes)",
+      "  vite-react   Vite + React (plugin-based dev server)",
+      "  vite-vue     Vite + Vue (plugin-based dev server)",
+      "  express      Express (sidecar modules)",
+      "  hono         Hono (sidecar modules)"
+    ].join("\n")
+  );
+}
+
+function printChecks(): void {
+  const check = explainCheck("robots-txt");
+
+  if (!check) {
+    return;
+  }
+
+  console.log(
+    [
+      "Checks (18 total):",
+      "",
+      "Discoverability:",
+      "  robots-txt               /robots.txt existence and directives",
+      "  sitemap                  Sitemap discoverability and parsing",
+      "  link-headers             Discovery Link headers on homepage",
+      "",
+      "Content Accessibility:",
+      "  markdown-negotiation     Accept: text/markdown support",
+      "",
+      "Bot Access Control:",
+      "  ai-bot-rules             AI crawler directives in robots.txt",
+      "  content-signals          Content-Signal policies",
+      "  web-bot-auth             Web Bot Auth directory verification",
+      "",
+      "Discovery / API / Auth:",
+      "  api-catalog              OpenAPI/Swagger document",
+      "  mcp-server-card          MCP server card (/.well-known/mcp.json)",
+      "  a2a-agent-card           A2A agent card (/.well-known/agent.json)",
+      "  agent-skills             Agent Skills in llms.txt and HTML",
+      "  webmcp                   WebMCP capability markers",
+      "  oauth-discovery          OAuth authorization server metadata",
+      "  oauth-protected-resource OAuth protected resource metadata",
+      "",
+      "Commerce:",
+      "  x402                     x402 payment protocol",
+      "  mpp                      Merchant Payment Protocol",
+      "  ucp                      Universal Commerce Protocol",
+      "  acp                      Agentic Commerce Protocol"
+    ].join("\n")
+  );
 }
 
 main().catch((error) => {

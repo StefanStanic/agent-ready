@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { renderScanResult } from "./human";
 
+function strip(input: string): string {
+  return input.replace(/\x1b\[\d+m/g, "");
+}
+
 describe("renderScanResult", () => {
-  it("includes schema version and suggested fixes for non-pass checks", () => {
+  it("renders colored scan output with score bar, categories, and checks", () => {
     const output = renderScanResult({
       schemaVersion: "1.0.0",
       target: "https://example.com",
@@ -27,8 +31,13 @@ describe("renderScanResult", () => {
       warnings: []
     });
 
-    expect(output).toContain("Schema Version: 1.0.0");
-    expect(output).toContain("Suggested fixes:");
-    expect(output).toContain("Publish /robots.txt.");
+    const plain = strip(output);
+
+    expect(plain).toContain("https://example.com");
+    expect(plain).toContain("42/100");
+    expect(plain).toContain("robots.txt");
+    expect(plain).toContain("robots.txt is missing.");
+    expect(plain).toContain("Publish /robots.txt.");
+    expect(plain).toContain("50/100");
   });
 });
