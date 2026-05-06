@@ -1,6 +1,6 @@
 {
   "name": "@stefkec/agent-ready",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scan sites for agent readiness and scaffold framework-specific machine-readable endpoints.",
   "type": "module",
   "main": "./dist/index.cjs",
