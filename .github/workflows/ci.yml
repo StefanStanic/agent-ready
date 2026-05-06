@@ -30,9 +30,6 @@ jobs:
       - run: npm ci
       - run: npm run test -- --coverage
       - uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
 
   build:
     runs-on: ubuntu-latest
