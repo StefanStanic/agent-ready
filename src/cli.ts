@@ -13,6 +13,7 @@ import type {
 } from "./core/types";
 import { renderScanResult, renderScaffoldResult } from "./reporters/human";
 import { renderScanResultMarkdown, renderScaffoldResultMarkdown } from "./reporters/markdown";
+import { interactiveWizard } from "./scaffold/wizard";
 
 async function main(): Promise<void> {
   const [, , command, ...args] = process.argv;
@@ -81,12 +82,17 @@ async function runInit(args: string[]): Promise<void> {
     config.init?.preset;
   const features = parseFeatures(readOption(args, "--features")) ?? config.init?.features;
   const dryRun = hasFlag(args, "--dry-run") || config.init?.dryRun === true;
+  const interactive = hasFlag(args, "--interactive");
+
+  const placeholders = interactive ? await interactiveWizard(cwd) : undefined;
+
   const result = await scaffoldProject({
     cwd,
     features,
     framework,
     preset,
-    dryRun
+    dryRun,
+    placeholders
   });
   printOutput(
     renderScaffoldOutputText(result, resolveOutputFormat(args, config.init)),
@@ -103,9 +109,13 @@ async function runAdd(args: string[]): Promise<void> {
     throw new Error("Usage: agent-ready add <feature>");
   }
 
+  const interactive = hasFlag(args, "--interactive");
+  const placeholders = interactive ? await interactiveWizard(cwd) : undefined;
+
   const result = await scaffoldProject({
     cwd,
-    features: [feature]
+    features: [feature],
+    placeholders
   });
   printOutput(
     renderScaffoldOutputText(result, resolveOutputFormat(args, config.init)),
@@ -191,8 +201,8 @@ function printHelp(): void {
       "",
       "Commands:",
       "  agent-ready scan <url> [--json] [--format human|json|markdown] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
-      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--format human|json|markdown] [--report-file <path>]",
-      "  agent-ready add <feature> [--cwd <path>] [--json] [--format human|json|markdown] [--report-file <path>]",
+      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--interactive] [--json] [--format human|json|markdown] [--report-file <path>]",
+      "  agent-ready add <feature> [--cwd <path>] [--interactive] [--json] [--format human|json|markdown] [--report-file <path>]",
       "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--format human|json|markdown] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
     ].join("\n")

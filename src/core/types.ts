@@ -106,12 +106,22 @@ export type ScaffoldOperation = {
   reason: string;
 };
 
+export type ScaffoldPlaceholders = {
+  siteUrl?: string;
+  apiBaseUrl?: string;
+  apiTitle?: string;
+  mcpServerName?: string;
+  agentName?: string;
+  oauthIssuer?: string;
+};
+
 export type ScaffoldProjectOptions = {
   cwd?: string;
   framework?: FrameworkName;
   preset?: "content-site" | "application";
   features?: ScaffoldFeature[];
   dryRun?: boolean;
+  placeholders?: ScaffoldPlaceholders;
 };
 
 export type ScaffoldProjectResult = {

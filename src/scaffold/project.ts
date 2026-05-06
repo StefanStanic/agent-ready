@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { FrameworkName, ScaffoldFeature, ScaffoldOperation, ScaffoldProjectOptions, ScaffoldProjectResult } from "../core/types";
+import type { FrameworkName, ScaffoldFeature, ScaffoldOperation, ScaffoldPlaceholders, ScaffoldProjectOptions, ScaffoldProjectResult } from "../core/types";
 import { RESULT_SCHEMA_VERSION } from "../core/schema";
 import { detectFramework } from "../frameworks/detect";
 import { resolveStaticRoot } from "../frameworks/conventions";
@@ -25,6 +25,15 @@ export async function scaffoldProject(
   };
   const preset = options.preset ?? defaultPresetForFramework(framework.framework);
   const features = options.features ?? featuresForPreset(preset);
+  const p = options.placeholders;
+  const ph = {
+    siteUrl: p?.siteUrl || "https://example.com",
+    apiBaseUrl: p?.apiBaseUrl || "https://api.example.com",
+    apiTitle: p?.apiTitle || "Example API",
+    mcpServerName: p?.mcpServerName || "example-mcp-server",
+    agentName: p?.agentName || "example-agent",
+    oauthIssuer: p?.oauthIssuer || "https://example.com"
+  };
   const operations: ScaffoldOperation[] = [];
 
   for (const feature of features) {
@@ -39,12 +48,14 @@ export async function scaffoldProject(
       continue;
     }
 
-    if (existsSync(file.path)) {
-      const existingContents = readFileSync(file.path, "utf8");
+    const resolved = applyPlaceholders(file, ph);
 
-      if (existingContents === file.contents) {
+    if (existsSync(resolved.path)) {
+      const existingContents = readFileSync(resolved.path, "utf8");
+
+      if (existingContents === resolved.contents) {
         operations.push({
-          path: file.path,
+          path: resolved.path,
           status: "skip",
           reason: "File already exists and already matches the scaffold."
         });
@@ -53,8 +64,8 @@ export async function scaffoldProject(
 
       operations.push({
         existingPreview: preview(existingContents),
-        generatedPreview: preview(file.contents),
-        path: file.path,
+        generatedPreview: preview(resolved.contents),
+        path: resolved.path,
         status: "conflict",
         reason: "File already exists and differs from the generated scaffold."
       });
@@ -62,14 +73,14 @@ export async function scaffoldProject(
     }
 
     operations.push({
-      path: file.path,
+      path: resolved.path,
       status: "create",
       reason: "Scaffold file will be created."
     });
 
     if (!options.dryRun) {
-      mkdirSync(dirname(file.path), { recursive: true });
-      writeFileSync(file.path, file.contents, "utf8");
+      mkdirSync(dirname(resolved.path), { recursive: true });
+      writeFileSync(resolved.path, resolved.contents, "utf8");
     }
   }
 
@@ -652,6 +663,21 @@ function vitePluginScaffold(cwd: string): ScaffoldFile {
       ""
     ].join("\n")
   };
+}
+
+function applyPlaceholders(
+  file: ScaffoldFile,
+  ph: { siteUrl: string; apiBaseUrl: string; apiTitle: string; mcpServerName: string; agentName: string; oauthIssuer: string }
+): ScaffoldFile {
+  let contents = file.contents
+    .replaceAll("https://api.example.com", ph.apiBaseUrl)
+    .replaceAll("https://example.com/oauth", `${ph.oauthIssuer}/oauth`)
+    .replaceAll("https://example.com", ph.siteUrl)
+    .replaceAll("Example API", ph.apiTitle)
+    .replaceAll("example-mcp-server", ph.mcpServerName)
+    .replaceAll("example-agent", ph.agentName);
+
+  return { path: file.path, contents };
 }
 
 function preview(input: string): string {

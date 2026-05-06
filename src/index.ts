@@ -31,6 +31,7 @@ export type {
   ScanSiteOptions,
   ScaffoldFeature,
   ScaffoldOperation,
+  ScaffoldPlaceholders,
   ScaffoldProjectOptions,
   ScaffoldProjectResult
 } from "./core/types";
