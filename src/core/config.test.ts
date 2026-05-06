@@ -99,7 +99,7 @@ describe("loadAgentReadyConfig", () => {
     });
 
     expect(validation.valid).toBe(false);
-    expect(validation.errors).toContain("defaults.output must be one of: human, json.");
+    expect(validation.errors).toContain("defaults.output must be one of: human, json, markdown.");
     expect(validation.errors).toContain("init.preset must be one of: content-site, application.");
   });
 });

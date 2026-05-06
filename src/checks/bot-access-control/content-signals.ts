@@ -61,5 +61,6 @@ export function extractContentSignals(input: string): string[] {
   return matches
     .flatMap((line) => line.split(":").slice(1).join(":").split(","))
     .map((value) => value.trim().toLowerCase())
+    .map((value) => value.split("=")[0] ?? value)
     .filter((value) => SUPPORTED_KEYS.includes(value));
 }

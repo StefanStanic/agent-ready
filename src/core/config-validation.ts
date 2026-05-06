@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 const CHECK_STATUSES: CheckStatus[] = ["pass", "warn", "fail", "not_applicable", "error"];
-const OUTPUT_FORMATS: OutputFormat[] = ["human", "json"];
+const OUTPUT_FORMATS: OutputFormat[] = ["human", "json", "markdown"];
 const FRAMEWORKS: FrameworkName[] = [
   "next",
   "nuxt",

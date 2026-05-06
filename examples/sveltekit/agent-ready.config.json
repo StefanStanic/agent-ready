@@ -1,0 +1,25 @@
+{
+  "$schema": "https://example.com/agent-ready-config-schema.json",
+  "defaults": {
+    "output": "human",
+    "minScore": 0,
+    "failOnStatuses": ["fail", "error"]
+  },
+  "scan": {
+    "output": "human",
+    "minScore": 50,
+    "failOnStatuses": ["fail", "error"]
+  },
+  "doctor": {
+    "output": "human",
+    "minScore": 50,
+    "failOnStatuses": ["fail", "error"]
+  },
+  "init": {
+    "framework": "sveltekit",
+    "preset": "content-site",
+    "features": ["robots", "sitemap", "llms", "mcp", "agent-card", "api-catalog", "markdown", "oauth-discovery", "oauth-protected-resource"],
+    "dryRun": false,
+    "output": "human"
+  }
+}

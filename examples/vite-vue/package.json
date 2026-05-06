@@ -1,0 +1,8 @@
+{
+  "name": "example-vite-vue",
+  "private": true,
+  "dependencies": {
+    "vue": "^3.0.0",
+    "vite": "^6.0.0"
+  }
+}

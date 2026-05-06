@@ -1,0 +1,7 @@
+{
+  "name": "example-astro",
+  "private": true,
+  "dependencies": {
+    "astro": "^5.0.0"
+  }
+}
