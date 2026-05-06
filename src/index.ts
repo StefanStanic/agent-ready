@@ -4,13 +4,18 @@ export { detectFramework } from "./frameworks/detect";
 export { scaffoldProject } from "./scaffold/project";
 export { explainCheck } from "./core/explain-check";
 export { evaluateScanFailure } from "./core/evaluate";
+export { loadAgentReadyConfig } from "./core/config";
 export { renderScanResult, renderScaffoldResult } from "./reporters/human";
 export type {
+  AgentReadyCommandConfig,
+  AgentReadyConfig,
+  AgentReadyScaffoldConfig,
   CategoryScoreMap,
   CheckDefinition,
   CheckResult,
   CheckStatus,
   FrameworkDetection,
+  OutputFormat,
   ScanFailureOptions,
   ScanFailureResult,
   ScanProjectOptions,

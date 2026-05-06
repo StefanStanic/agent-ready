@@ -58,6 +58,8 @@ export type ScanFailureResult = {
   reasons: string[];
 };
 
+export type OutputFormat = "human" | "json";
+
 export type FrameworkName =
   | "next"
   | "nuxt"
@@ -117,4 +119,23 @@ export type ScaffoldProjectResult = {
   framework: FrameworkDetection;
   operations: ScaffoldOperation[];
   schemaVersion: string;
+};
+
+export type AgentReadyCommandConfig = {
+  failOnStatuses?: CheckStatus[];
+  minScore?: number;
+  output?: OutputFormat;
+};
+
+export type AgentReadyScaffoldConfig = {
+  dryRun?: boolean;
+  features?: ScaffoldFeature[];
+  framework?: FrameworkName;
+};
+
+export type AgentReadyConfig = {
+  defaults?: AgentReadyCommandConfig;
+  doctor?: AgentReadyCommandConfig;
+  init?: AgentReadyScaffoldConfig & { output?: OutputFormat };
+  scan?: AgentReadyCommandConfig;
 };

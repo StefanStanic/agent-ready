@@ -1,6 +1,14 @@
 import { explainCheck, scanProject, scanSite, scaffoldProject } from "./index";
+import { loadAgentReadyConfig } from "./core/config";
 import { evaluateScanFailure } from "./core/evaluate";
-import type { CheckStatus, FrameworkName, ScaffoldFeature } from "./core/types";
+import type {
+  AgentReadyCommandConfig,
+  AgentReadyScaffoldConfig,
+  CheckStatus,
+  FrameworkName,
+  OutputFormat,
+  ScaffoldFeature
+} from "./core/types";
 import { renderScanResult, renderScaffoldResult } from "./reporters/human";
 
 async function main(): Promise<void> {
@@ -36,35 +44,40 @@ async function main(): Promise<void> {
 
 async function runScan(args: string[]): Promise<void> {
   const url = readPositional(args, 0);
+  const config = await loadAgentReadyConfig(process.cwd());
 
   if (!url) {
     throw new Error("Usage: agent-ready scan <url>");
   }
 
   const report = await scanSite({ url });
-  printOutput(report, hasFlag(args, "--json") ? "json" : "human");
-  applyFailurePolicy(report, args);
+  printOutput(report, resolveOutputFormat(args, config.scan, config.defaults));
+  applyFailurePolicy(report, args, config.scan, config.defaults);
 }
 
 async function runDoctor(args: string[]): Promise<void> {
   const cwd = readPositional(args, 0);
+  const config = await loadAgentReadyConfig(cwd ?? process.cwd());
   const report = await scanProject({ cwd });
-  printOutput(report, hasFlag(args, "--json") ? "json" : "human");
-  applyFailurePolicy(report, args);
+  printOutput(report, resolveOutputFormat(args, config.doctor, config.defaults));
+  applyFailurePolicy(report, args, config.doctor, config.defaults);
 }
 
 async function runInit(args: string[]): Promise<void> {
-  const framework = readOption(args, "--framework") as FrameworkName | undefined;
-  const dryRun = hasFlag(args, "--dry-run");
+  const config = await loadAgentReadyConfig(process.cwd());
+  const framework = (readOption(args, "--framework") as FrameworkName | undefined) ?? config.init?.framework;
+  const dryRun = hasFlag(args, "--dry-run") || config.init?.dryRun === true;
   const result = await scaffoldProject({
+    features: config.init?.features,
     framework,
     dryRun
   });
-  printScaffoldOutput(result, hasFlag(args, "--json") ? "json" : "human");
+  printScaffoldOutput(result, resolveOutputFormat(args, config.init));
 }
 
 async function runAdd(args: string[]): Promise<void> {
   const feature = readPositional(args, 0) as ScaffoldFeature | undefined;
+  const config = await loadAgentReadyConfig(process.cwd());
 
   if (!feature) {
     throw new Error("Usage: agent-ready add <feature>");
@@ -73,7 +86,7 @@ async function runAdd(args: string[]): Promise<void> {
   const result = await scaffoldProject({
     features: [feature]
   });
-  printScaffoldOutput(result, hasFlag(args, "--json") ? "json" : "human");
+  printScaffoldOutput(result, resolveOutputFormat(args, config.init));
 }
 
 function runExplain(args: string[]): void {
@@ -177,13 +190,17 @@ function printHelp(): void {
 
 function applyFailurePolicy(
   result: Parameters<typeof evaluateScanFailure>[0],
-  args: string[]
+  args: string[],
+  commandConfig?: AgentReadyCommandConfig,
+  defaultConfig?: AgentReadyCommandConfig
 ): void {
   const minScore = readOption(args, "--min-score");
   const failOnStatus = readOption(args, "--fail-on-status");
   const evaluation = evaluateScanFailure(result, {
-    minScore: minScore ? Number(minScore) : undefined,
-    failOnStatuses: failOnStatus ? parseStatuses(failOnStatus) : undefined
+    minScore: minScore ? Number(minScore) : commandConfig?.minScore ?? defaultConfig?.minScore,
+    failOnStatuses: failOnStatus
+      ? parseStatuses(failOnStatus)
+      : commandConfig?.failOnStatuses ?? defaultConfig?.failOnStatuses
   });
 
   if (!evaluation.failed) {
@@ -210,6 +227,18 @@ function parseStatuses(input: string): CheckStatus[] {
 
 function optionExpectsValue(name: string): boolean {
   return name === "--framework" || name === "--min-score" || name === "--fail-on-status";
+}
+
+function resolveOutputFormat(
+  args: string[],
+  commandConfig?: AgentReadyCommandConfig | (AgentReadyScaffoldConfig & { output?: OutputFormat }),
+  defaultConfig?: AgentReadyCommandConfig
+): OutputFormat {
+  if (hasFlag(args, "--json")) {
+    return "json";
+  }
+
+  return commandConfig?.output ?? defaultConfig?.output ?? "human";
 }
 
 main().catch((error) => {

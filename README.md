@@ -2,27 +2,148 @@
 
 `agent-ready` is a TypeScript-first CLI and library for scanning agent-readiness signals and scaffolding framework-specific machine-readable endpoints.
 
-## Commands
+## What it does
+
+- Scans live sites against an agent-readiness surface modeled on `isitagentready.com`
+- Inspects local projects with framework-aware path and route conventions
+- Scaffolds agent-facing files and endpoints for supported JavaScript/TypeScript frameworks
+- Supports CI-friendly exit behavior with score and status thresholds
+
+## Install
+
+```bash
+npm install agent-ready
+```
+
+Or run it directly:
 
 ```bash
 npx agent-ready scan https://example.com
-npx agent-ready init --framework next
-npx agent-ready add mcp
+```
+
+## CLI
+
+```bash
+agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]
+agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]
+agent-ready init [--framework <name>] [--dry-run] [--json]
+agent-ready add <feature> [--json]
+agent-ready explain <check>
+```
+
+### Examples
+
+Scan a live site:
+
+```bash
+npx agent-ready scan https://example.com
+```
+
+Scan a live site and fail CI on warnings or failures:
+
+```bash
+npx agent-ready scan https://example.com --min-score 80 --fail-on-status warn,fail
+```
+
+Inspect a local project:
+
+```bash
 npx agent-ready doctor
 ```
+
+Scaffold a Next.js project:
+
+```bash
+npx agent-ready init --framework next
+```
+
+Add only an MCP server card scaffold:
+
+```bash
+npx agent-ready add mcp
+```
+
+## Config file
+
+Supported config files:
+
+- `agent-ready.config.json`
+- `agent-ready.config.mjs`
+- `agent-ready.config.cjs`
+
+Example:
+
+```json
+{
+  "defaults": {
+    "output": "human"
+  },
+  "scan": {
+    "minScore": 80,
+    "failOnStatuses": ["warn", "fail"]
+  },
+  "doctor": {
+    "minScore": 75,
+    "failOnStatuses": ["fail", "error"]
+  },
+  "init": {
+    "framework": "next",
+    "features": ["api-catalog", "robots", "sitemap", "llms", "mcp"]
+  }
+}
+```
+
+Config is optional. CLI flags still take precedence.
+
+## Supported scaffold features
+
+- `api-catalog`
+- `robots`
+- `sitemap`
+- `llms`
+- `markdown`
+- `mcp`
+- `agent-card`
+- `oauth-discovery`
+- `oauth-protected-resource`
+
+## Supported frameworks
+
+- `next`
+- `astro`
+- `sveltekit`
+- `express`
+- `hono`
+- `nuxt`
+- `vite-react`
+- `vite-vue`
+
+Framework support is uneven right now. `next`, `astro`, `sveltekit`, `express`, and `hono` have the strongest scaffold behavior.
 
 ## TypeScript usage
 
 ```ts
-import { scanSite, scaffoldProject } from "agent-ready";
+import { scanSite, scaffoldProject, scanProject } from "agent-ready";
 
 const report = await scanSite({ url: "https://example.com" });
+
+const local = await scanProject({ cwd: process.cwd() });
 
 await scaffoldProject({
   cwd: process.cwd(),
   framework: "next",
-  features: ["robots", "llms", "mcp"]
+  features: ["api-catalog", "robots", "llms", "mcp"]
 });
+```
+
+## CI example
+
+```bash
+npx agent-ready doctor --min-score 80 --fail-on-status fail,error
+```
+
+```bash
+npx agent-ready scan https://example.com --min-score 85 --fail-on-status warn,fail,error
 ```
 
 ## Development
