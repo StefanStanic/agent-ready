@@ -3,10 +3,12 @@ import { checkContentSignals } from "../checks/bot-access-control/content-signal
 import { checkWebBotAuth } from "../checks/bot-access-control/web-bot-auth";
 import { checkMarkdownNegotiation } from "../checks/content/markdown-negotiation";
 import { checkA2aAgentCard } from "../checks/discovery/a2a-agent-card";
+import { checkAgentSkills } from "../checks/discovery/agent-skills";
 import { checkApiCatalog } from "../checks/discovery/api-catalog";
 import { checkMcpServerCard } from "../checks/discovery/mcp-server-card";
 import { checkOauthDiscovery } from "../checks/discovery/oauth-discovery";
 import { checkOauthProtectedResource } from "../checks/discovery/oauth-protected-resource";
+import { checkWebMcp } from "../checks/discovery/webmcp";
 import { checkLinkHeaders } from "../checks/discoverability/link-headers";
 import { checkRobotsTxt } from "../checks/discoverability/robots-txt";
 import { checkSitemap } from "../checks/discoverability/sitemap";
@@ -27,6 +29,8 @@ export async function scanSite(options: ScanSiteOptions): Promise<ScanResult> {
     checkApiCatalog(baseUrl),
     checkMcpServerCard(baseUrl),
     checkA2aAgentCard(baseUrl),
+    checkAgentSkills(baseUrl),
+    checkWebMcp(baseUrl),
     checkOauthDiscovery(baseUrl),
     checkOauthProtectedResource(baseUrl)
   ]);

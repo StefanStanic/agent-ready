@@ -102,6 +102,42 @@ const CHECK_EXPLANATIONS: Record<string, Omit<CheckResult, "status" | "evidence"
     summary: "Checks for an OpenAPI or Swagger document at common discovery paths.",
     fixes: ["Publish an OpenAPI or Swagger document for machine-readable API discovery."],
     docs: ["https://isitagentready.com/"]
+  },
+  "web-bot-auth": {
+    id: "web-bot-auth",
+    category: "bot-access-control",
+    title: "Web Bot Auth",
+    scoreWeight: 7,
+    summary: "Checks for signed HTTP Message Signatures directory metadata over HTTPS.",
+    fixes: [
+      "Publish /.well-known/http-message-signatures-directory with the expected content type.",
+      "Sign the response and expose a valid keys array."
+    ],
+    docs: ["https://developers.cloudflare.com/bots/reference/bot-verification/web-bot-auth/"]
+  },
+  "agent-skills": {
+    id: "agent-skills",
+    category: "discovery",
+    title: "Agent Skills",
+    scoreWeight: 5,
+    summary: "Checks machine-readable content for explicit agent skill references.",
+    fixes: [
+      "Publish llms.txt with an explicit Skills section.",
+      "Document agent capabilities in machine-readable content."
+    ],
+    docs: ["https://isitagentready.com/"]
+  },
+  webmcp: {
+    id: "webmcp",
+    category: "discovery",
+    title: "WebMCP",
+    scoreWeight: 5,
+    summary: "Checks HTML responses for explicit WebMCP capability markers.",
+    fixes: [
+      "Expose explicit WebMCP capability markers if supported.",
+      "Document WebMCP support in linked machine-readable content."
+    ],
+    docs: ["https://isitagentready.com/"]
   }
 };
 
