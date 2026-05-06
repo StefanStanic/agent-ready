@@ -1,6 +1,6 @@
 {
-  "name": "agent-ready",
-  "version": "0.0.0",
+  "name": "@stefkec/agent-ready",
+  "version": "0.1.0",
   "description": "Scan sites for agent readiness and scaffold framework-specific machine-readable endpoints.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -8,7 +8,7 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "bin": {
-    "agent-ready": "./dist/cli.js"
+    "agent-ready": "dist/cli.js"
   },
   "exports": {
     ".": {

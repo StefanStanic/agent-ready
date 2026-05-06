@@ -12,13 +12,13 @@
 ## Install
 
 ```bash
-npm install agent-ready
+npm install @stefkec/agent-ready
 ```
 
 Or run it directly:
 
 ```bash
-npx agent-ready scan https://example.com
+npx @stefkec/agent-ready scan https://example.com
 ```
 
 ## CLI
