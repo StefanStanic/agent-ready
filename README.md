@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@stefkec/agent-ready)](https://www.npmjs.com/package/@stefkec/agent-ready)
 [![npm downloads](https://img.shields.io/npm/dm/@stefkec/agent-ready)](https://www.npmjs.com/package/@stefkec/agent-ready)
+[![CI](https://github.com/StefanStanic/agent-ready/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanStanic/agent-ready/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/@stefkec/agent-ready)](LICENSE)
 [![node](https://img.shields.io/node/v/@stefkec/agent-ready)](https://nodejs.org)
 
