@@ -24,10 +24,10 @@ npx agent-ready scan https://example.com
 ## CLI
 
 ```bash
-agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready doctor [cwd] [--cwd <path>] [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]
-agent-ready add <feature> [--cwd <path>] [--json]
+agent-ready scan <url> [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]
+agent-ready doctor [cwd] [--cwd <path>] [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]
+agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--report-file <path>]
+agent-ready add <feature> [--cwd <path>] [--json] [--report-file <path>]
 agent-ready explain <check>
 ```
 
@@ -43,6 +43,12 @@ Scan a live site and fail CI on warnings or failures:
 
 ```bash
 npx agent-ready scan https://example.com --min-score 80 --fail-on-status warn,fail
+```
+
+Write a JSON report artifact:
+
+```bash
+npx agent-ready doctor --json --report-file ./reports/agent-ready.json
 ```
 
 Inspect a local project:

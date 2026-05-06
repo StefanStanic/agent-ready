@@ -1,6 +1,8 @@
 import { explainCheck, scanProject, scanSite, scaffoldProject } from "./index";
 import { loadAgentReadyConfig } from "./core/config";
 import { evaluateScanFailure } from "./core/evaluate";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import type {
   AgentReadyCommandConfig,
   AgentReadyScaffoldConfig,
@@ -51,7 +53,10 @@ async function runScan(args: string[]): Promise<void> {
   }
 
   const report = await scanSite({ url });
-  printOutput(report, resolveOutputFormat(args, config.scan, config.defaults));
+  printOutput(
+    renderOutput(report, resolveOutputFormat(args, config.scan, config.defaults)),
+    readOption(args, "--report-file")
+  );
   applyFailurePolicy(report, args, config.scan, config.defaults);
 }
 
@@ -59,7 +64,10 @@ async function runDoctor(args: string[]): Promise<void> {
   const cwd = readOption(args, "--cwd") ?? readPositional(args, 0);
   const config = await loadAgentReadyConfig(cwd ?? process.cwd());
   const report = await scanProject({ cwd });
-  printOutput(report, resolveOutputFormat(args, config.doctor, config.defaults));
+  printOutput(
+    renderOutput(report, resolveOutputFormat(args, config.doctor, config.defaults)),
+    readOption(args, "--report-file")
+  );
   applyFailurePolicy(report, args, config.doctor, config.defaults);
 }
 
@@ -79,7 +87,10 @@ async function runInit(args: string[]): Promise<void> {
     preset,
     dryRun
   });
-  printScaffoldOutput(result, resolveOutputFormat(args, config.init));
+  printOutput(
+    renderScaffoldOutputText(result, resolveOutputFormat(args, config.init)),
+    readOption(args, "--report-file")
+  );
 }
 
 async function runAdd(args: string[]): Promise<void> {
@@ -95,7 +106,10 @@ async function runAdd(args: string[]): Promise<void> {
     cwd,
     features: [feature]
   });
-  printScaffoldOutput(result, resolveOutputFormat(args, config.init));
+  printOutput(
+    renderScaffoldOutputText(result, resolveOutputFormat(args, config.init)),
+    readOption(args, "--report-file")
+  );
 }
 
 function runExplain(args: string[]): void {
@@ -158,28 +172,15 @@ function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
 
-function printOutput(
-  value: Parameters<typeof renderScanResult>[0],
-  format: "json" | "human"
-): void {
-  if (format === "json") {
-    printJson(value);
+function printOutput(output: string, reportFile?: string): void {
+  console.log(output);
+
+  if (!reportFile) {
     return;
   }
 
-  console.log(renderScanResult(value));
-}
-
-function printScaffoldOutput(
-  value: Parameters<typeof renderScaffoldResult>[0],
-  format: "json" | "human"
-): void {
-  if (format === "json") {
-    printJson(value);
-    return;
-  }
-
-  console.log(renderScaffoldResult(value));
+  mkdirSync(dirname(reportFile), { recursive: true });
+  writeFileSync(reportFile, `${output}\n`, "utf8");
 }
 
 function printHelp(): void {
@@ -188,10 +189,10 @@ function printHelp(): void {
       "agent-ready",
       "",
       "Commands:",
-      "  agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]",
-      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]",
-      "  agent-ready add <feature> [--cwd <path>] [--json]",
-      "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--min-score <n>] [--fail-on-status <list>]",
+      "  agent-ready scan <url> [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
+      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json] [--report-file <path>]",
+      "  agent-ready add <feature> [--cwd <path>] [--json] [--report-file <path>]",
+      "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--report-file <path>] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
     ].join("\n")
   );
@@ -240,6 +241,7 @@ function optionExpectsValue(name: string): boolean {
     name === "--features" ||
     name === "--framework" ||
     name === "--preset" ||
+    name === "--report-file" ||
     name === "--min-score" ||
     name === "--fail-on-status"
   );
@@ -266,6 +268,28 @@ function resolveOutputFormat(
   }
 
   return commandConfig?.output ?? defaultConfig?.output ?? "human";
+}
+
+function renderOutput(
+  value: Parameters<typeof renderScanResult>[0],
+  format: "json" | "human"
+): string {
+  if (format === "json") {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return renderScanResult(value);
+}
+
+function renderScaffoldOutputText(
+  value: Parameters<typeof renderScaffoldResult>[0],
+  format: "json" | "human"
+): string {
+  if (format === "json") {
+    return JSON.stringify(value, null, 2);
+  }
+
+  return renderScaffoldResult(value);
 }
 
 main().catch((error) => {
