@@ -86,6 +86,8 @@ function scaffoldFileForFeature(
   feature: ScaffoldFeature
 ): ScaffoldFile | null {
   switch (feature) {
+    case "api-catalog":
+      return apiCatalogScaffold(cwd, framework);
     case "robots":
       return {
         path: join(resolveStaticRoot(cwd, framework), "robots.txt"),
@@ -108,8 +110,79 @@ function scaffoldFileForFeature(
       return wellKnownScaffold(cwd, framework, "mcp");
     case "agent-card":
       return wellKnownScaffold(cwd, framework, "agent-card");
+    case "oauth-discovery":
+      return oauthDiscoveryScaffold(cwd, framework);
+    case "oauth-protected-resource":
+      return oauthProtectedResourceScaffold(cwd, framework);
     default:
       return null;
+  }
+}
+
+function apiCatalogScaffold(cwd: string, framework: FrameworkName): ScaffoldFile {
+  const payload = JSON.stringify(
+    {
+      openapi: "3.1.0",
+      info: {
+        title: "Example API",
+        version: "1.0.0"
+      },
+      paths: {
+        "/health": {
+          get: {
+            summary: "Health check",
+            responses: {
+              "200": {
+                description: "OK"
+              }
+            }
+          }
+        }
+      }
+    },
+    null,
+    2
+  );
+
+  switch (framework) {
+    case "next":
+      return {
+        path: join(cwd, "app", "openapi.json", "route.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    case "astro":
+      return {
+        path: join(cwd, "src", "pages", "openapi.json.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    case "sveltekit":
+      return {
+        path: join(cwd, "src", "routes", "openapi.json", "+server.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    default:
+      return {
+        path: join(cwd, "openapi.json"),
+        contents: payload
+      };
   }
 }
 
@@ -289,6 +362,83 @@ function wellKnownScaffold(
 
   const filename = feature === "mcp" ? "mcp.json" : "agent.json";
 
+  switch (framework) {
+    case "next":
+      return {
+        path: join(cwd, "app", ".well-known", filename, "route.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    case "astro":
+      return {
+        path: join(cwd, "src", "pages", ".well-known", `${filename}.ts`),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    case "sveltekit":
+      return {
+        path: join(cwd, "src", "routes", ".well-known", filename, "+server.ts"),
+        contents: [
+          "const payload = " + payload + ";",
+          "",
+          "export function GET() {",
+          "  return Response.json(payload);",
+          "}"
+        ].join("\n")
+      };
+    default:
+      return {
+        path: join(resolveStaticRoot(cwd, framework), ".well-known", filename),
+        contents: payload
+      };
+  }
+}
+
+function oauthDiscoveryScaffold(cwd: string, framework: FrameworkName): ScaffoldFile {
+  const payload = JSON.stringify(
+    {
+      issuer: "https://example.com",
+      authorization_endpoint: "https://example.com/oauth/authorize",
+      token_endpoint: "https://example.com/oauth/token",
+      jwks_uri: "https://example.com/.well-known/jwks.json"
+    },
+    null,
+    2
+  );
+
+  return wellKnownJsonScaffold(cwd, framework, "oauth-authorization-server", payload);
+}
+
+function oauthProtectedResourceScaffold(cwd: string, framework: FrameworkName): ScaffoldFile {
+  const payload = JSON.stringify(
+    {
+      resource: "https://api.example.com",
+      authorization_servers: ["https://example.com"],
+      scopes_supported: ["read"]
+    },
+    null,
+    2
+  );
+
+  return wellKnownJsonScaffold(cwd, framework, "oauth-protected-resource", payload);
+}
+
+function wellKnownJsonScaffold(
+  cwd: string,
+  framework: FrameworkName,
+  filename: "oauth-authorization-server" | "oauth-protected-resource",
+  payload: string
+): ScaffoldFile {
   switch (framework) {
     case "next":
       return {

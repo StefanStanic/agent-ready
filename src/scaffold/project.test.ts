@@ -55,9 +55,12 @@ describe("scaffoldProject", () => {
     await scaffoldProject({
       cwd,
       framework: "next",
-      features: ["mcp", "agent-card", "sitemap"]
+      features: ["api-catalog", "mcp", "agent-card", "oauth-discovery", "oauth-protected-resource", "sitemap"]
     });
 
+    expect(readFileSync(join(cwd, "app", "openapi.json", "route.ts"), "utf8")).toContain(
+      "Example API"
+    );
     expect(readFileSync(join(cwd, "app", ".well-known", "mcp.json", "route.ts"), "utf8")).toContain(
       "return Response.json(payload);"
     );
@@ -67,6 +70,12 @@ describe("scaffoldProject", () => {
     expect(readFileSync(join(cwd, "app", "sitemap.ts"), "utf8")).toContain(
       "MetadataRoute.Sitemap"
     );
+    expect(
+      readFileSync(join(cwd, "app", ".well-known", "oauth-authorization-server", "route.ts"), "utf8")
+    ).toContain("authorization_endpoint");
+    expect(
+      readFileSync(join(cwd, "app", ".well-known", "oauth-protected-resource", "route.ts"), "utf8")
+    ).toContain("authorization_servers");
   });
 
   it("creates Astro markdown and well-known pages", async () => {

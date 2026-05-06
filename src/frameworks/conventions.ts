@@ -2,12 +2,15 @@ import { join } from "node:path";
 import type { FrameworkName } from "../core/types";
 
 export type ProjectFeature =
+  | "api-catalog"
   | "robots"
   | "sitemap"
   | "llms"
   | "markdown"
   | "mcp"
-  | "agent-card";
+  | "agent-card"
+  | "oauth-discovery"
+  | "oauth-protected-resource";
 
 export function resolveFeatureCandidates(
   cwd: string,
@@ -17,6 +20,14 @@ export function resolveFeatureCandidates(
   const staticRoot = resolveStaticRoot(cwd, framework);
 
   switch (feature) {
+    case "api-catalog":
+      return uniquePaths([
+        join(cwd, "openapi.json"),
+        join(cwd, "openapi.yaml"),
+        join(cwd, "swagger.json"),
+        join(cwd, "api", "openapi.json"),
+        ...apiCatalogRouteCandidates(cwd, framework)
+      ]);
     case "robots":
       return [join(staticRoot, "robots.txt")];
     case "sitemap":
@@ -42,6 +53,18 @@ export function resolveFeatureCandidates(
       return uniquePaths([
         join(staticRoot, ".well-known", "agent.json"),
         ...wellKnownRouteCandidates(cwd, framework, "agent.json")
+      ]);
+    case "oauth-discovery":
+      return uniquePaths([
+        join(staticRoot, ".well-known", "oauth-authorization-server"),
+        join(staticRoot, ".well-known", "openid-configuration"),
+        ...wellKnownRouteCandidates(cwd, framework, "oauth-authorization-server"),
+        ...wellKnownRouteCandidates(cwd, framework, "openid-configuration")
+      ]);
+    case "oauth-protected-resource":
+      return uniquePaths([
+        join(staticRoot, ".well-known", "oauth-protected-resource"),
+        ...wellKnownRouteCandidates(cwd, framework, "oauth-protected-resource")
       ]);
   }
 }
@@ -85,7 +108,12 @@ function markdownRouteCandidates(cwd: string, framework: FrameworkName): string[
 function wellKnownRouteCandidates(
   cwd: string,
   framework: FrameworkName,
-  filename: "mcp.json" | "agent.json"
+  filename:
+    | "mcp.json"
+    | "agent.json"
+    | "oauth-authorization-server"
+    | "openid-configuration"
+    | "oauth-protected-resource"
 ): string[] {
   switch (framework) {
     case "next":
@@ -97,6 +125,22 @@ function wellKnownRouteCandidates(
       return [join(cwd, "src", "pages", ".well-known", `${filename}.ts`)];
     case "sveltekit":
       return [join(cwd, "src", "routes", ".well-known", filename, "+server.ts")];
+    default:
+      return [];
+  }
+}
+
+function apiCatalogRouteCandidates(cwd: string, framework: FrameworkName): string[] {
+  switch (framework) {
+    case "next":
+      return [
+        join(cwd, "app", "openapi.json", "route.ts"),
+        join(cwd, "src", "app", "openapi.json", "route.ts")
+      ];
+    case "astro":
+      return [join(cwd, "src", "pages", "openapi.json.ts")];
+    case "sveltekit":
+      return [join(cwd, "src", "routes", "openapi.json", "+server.ts")];
     default:
       return [];
   }

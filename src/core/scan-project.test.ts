@@ -20,17 +20,21 @@ describe("scanProject", () => {
   it("checks Next.js framework-native paths", async () => {
     const cwd = createTempDir();
     writePackageJson(cwd, { dependencies: { next: "^15.0.0", react: "^19.0.0" } });
+    writeFile(cwd, "app/openapi.json/route.ts", "export function GET() { return Response.json({}); }\n");
     writeFile(cwd, "public/robots.txt", "User-agent: *\nAllow: /\n");
     writeFile(cwd, "app/llms.txt/route.ts", "export function GET() { return new Response('ok'); }\n");
     writeFile(cwd, "app/.well-known/mcp.json/route.ts", "export function GET() { return Response.json({}); }\n");
+    writeFile(cwd, "app/.well-known/oauth-authorization-server/route.ts", "export function GET() { return Response.json({}); }\n");
 
     const result = await scanProject({ cwd });
 
     expect(result.framework.framework).toBe("next");
+    expect(findCheck(result, "api-catalog")?.status).toBe("pass");
     expect(findCheck(result, "robots-txt")?.status).toBe("pass");
     expect(findCheck(result, "llms-txt")?.status).toBe("pass");
     expect(findCheck(result, "markdown-route")?.status).toBe("pass");
     expect(findCheck(result, "mcp-server-card")?.status).toBe("pass");
+    expect(findCheck(result, "oauth-discovery")?.status).toBe("pass");
   });
 
   it("checks SvelteKit static and route conventions", async () => {

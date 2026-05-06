@@ -76,12 +76,15 @@ export type ScanProjectResult = ScanResult & {
 };
 
 export type ScaffoldFeature =
+  | "api-catalog"
   | "robots"
   | "sitemap"
   | "llms"
   | "markdown"
   | "mcp"
-  | "agent-card";
+  | "agent-card"
+  | "oauth-discovery"
+  | "oauth-protected-resource";
 
 export type ScaffoldOperation = {
   existingPreview?: string;

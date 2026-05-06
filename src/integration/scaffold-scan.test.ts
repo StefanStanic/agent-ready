@@ -30,7 +30,16 @@ describe("scaffoldProject + scanProject", () => {
     await scaffoldProject({
       cwd,
       framework: "next",
-      features: ["robots", "sitemap", "llms", "mcp", "agent-card"]
+      features: [
+        "api-catalog",
+        "robots",
+        "sitemap",
+        "llms",
+        "mcp",
+        "agent-card",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ]
     });
 
     const result = await scanProject({ cwd });
@@ -49,13 +58,22 @@ describe("scaffoldProject + scanProject", () => {
     await scaffoldProject({
       cwd,
       framework: "astro",
-      features: ["robots", "sitemap", "llms", "mcp"]
+      features: [
+        "api-catalog",
+        "robots",
+        "sitemap",
+        "llms",
+        "mcp",
+        "agent-card",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ]
     });
 
     const result = await scanProject({ cwd });
 
     expect(result.framework.framework).toBe("astro");
-    expect(nonPassingChecks(result.checks)).toEqual(["a2a-agent-card"]);
+    expect(nonPassingChecks(result.checks)).toEqual([]);
   });
 
   it("scaffolds and validates an Express project", async () => {
@@ -68,15 +86,26 @@ describe("scaffoldProject + scanProject", () => {
     await scaffoldProject({
       cwd,
       framework: "express",
-      features: ["robots", "sitemap", "markdown", "mcp"]
+      features: [
+        "api-catalog",
+        "robots",
+        "sitemap",
+        "markdown",
+        "mcp",
+        "oauth-discovery",
+        "oauth-protected-resource"
+      ]
     });
 
     const result = await scanProject({ cwd });
 
     expect(result.framework.framework).toBe("express");
     expect(findCheckStatus(result, "robots-txt")).toBe("pass");
+    expect(findCheckStatus(result, "api-catalog")).toBe("pass");
     expect(findCheckStatus(result, "markdown-route")).toBe("pass");
     expect(findCheckStatus(result, "mcp-server-card")).toBe("pass");
+    expect(findCheckStatus(result, "oauth-discovery")).toBe("pass");
+    expect(findCheckStatus(result, "oauth-protected-resource")).toBe("pass");
   });
 });
 

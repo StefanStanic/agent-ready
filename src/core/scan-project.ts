@@ -10,6 +10,13 @@ export async function scanProject(options: ScanProjectOptions = {}): Promise<Sca
   const framework = detectFramework({ cwd });
   const checks: CheckResult[] = [
     projectFeatureCheck(cwd, framework.framework, {
+      id: "api-catalog",
+      feature: "api-catalog",
+      title: "API Catalog",
+      category: "discovery",
+      scoreWeight: 8
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
       id: "robots-txt",
       feature: "robots",
       title: "robots.txt",
@@ -51,6 +58,20 @@ export async function scanProject(options: ScanProjectOptions = {}): Promise<Sca
       title: "A2A Agent Card",
       category: "discovery",
       scoreWeight: 6
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "oauth-discovery",
+      feature: "oauth-discovery",
+      title: "OAuth Discovery",
+      category: "discovery",
+      scoreWeight: 5
+    }),
+    projectFeatureCheck(cwd, framework.framework, {
+      id: "oauth-protected-resource",
+      feature: "oauth-protected-resource",
+      title: "OAuth Protected Resource",
+      category: "discovery",
+      scoreWeight: 5
     })
   ];
   const summary = summarizeScores(checks);
