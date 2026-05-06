@@ -56,7 +56,7 @@ async function runScan(args: string[]): Promise<void> {
 }
 
 async function runDoctor(args: string[]): Promise<void> {
-  const cwd = readPositional(args, 0);
+  const cwd = readOption(args, "--cwd") ?? readPositional(args, 0);
   const config = await loadAgentReadyConfig(cwd ?? process.cwd());
   const report = await scanProject({ cwd });
   printOutput(report, resolveOutputFormat(args, config.doctor, config.defaults));
@@ -64,7 +64,8 @@ async function runDoctor(args: string[]): Promise<void> {
 }
 
 async function runInit(args: string[]): Promise<void> {
-  const config = await loadAgentReadyConfig(process.cwd());
+  const cwd = readOption(args, "--cwd") ?? process.cwd();
+  const config = await loadAgentReadyConfig(cwd);
   const framework = (readOption(args, "--framework") as FrameworkName | undefined) ?? config.init?.framework;
   const preset =
     (readOption(args, "--preset") as "content-site" | "application" | undefined) ??
@@ -72,6 +73,7 @@ async function runInit(args: string[]): Promise<void> {
   const features = parseFeatures(readOption(args, "--features")) ?? config.init?.features;
   const dryRun = hasFlag(args, "--dry-run") || config.init?.dryRun === true;
   const result = await scaffoldProject({
+    cwd,
     features,
     framework,
     preset,
@@ -82,13 +84,15 @@ async function runInit(args: string[]): Promise<void> {
 
 async function runAdd(args: string[]): Promise<void> {
   const feature = readPositional(args, 0) as ScaffoldFeature | undefined;
-  const config = await loadAgentReadyConfig(process.cwd());
+  const cwd = readOption(args, "--cwd") ?? process.cwd();
+  const config = await loadAgentReadyConfig(cwd);
 
   if (!feature) {
     throw new Error("Usage: agent-ready add <feature>");
   }
 
   const result = await scaffoldProject({
+    cwd,
     features: [feature]
   });
   printScaffoldOutput(result, resolveOutputFormat(args, config.init));
@@ -185,9 +189,9 @@ function printHelp(): void {
       "",
       "Commands:",
       "  agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]",
-      "  agent-ready init [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]",
-      "  agent-ready add <feature> [--json]",
-      "  agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]",
+      "  agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]",
+      "  agent-ready add <feature> [--cwd <path>] [--json]",
+      "  agent-ready doctor [cwd] [--cwd <path>] [--json] [--min-score <n>] [--fail-on-status <list>]",
       "  agent-ready explain <check>"
     ].join("\n")
   );
@@ -232,6 +236,7 @@ function parseStatuses(input: string): CheckStatus[] {
 
 function optionExpectsValue(name: string): boolean {
   return (
+    name === "--cwd" ||
     name === "--features" ||
     name === "--framework" ||
     name === "--preset" ||

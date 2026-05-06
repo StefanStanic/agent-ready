@@ -25,9 +25,9 @@ npx agent-ready scan https://example.com
 
 ```bash
 agent-ready scan <url> [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready doctor [cwd] [--json] [--min-score <n>] [--fail-on-status <list>]
-agent-ready init [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]
-agent-ready add <feature> [--json]
+agent-ready doctor [cwd] [--cwd <path>] [--json] [--min-score <n>] [--fail-on-status <list>]
+agent-ready init [--cwd <path>] [--framework <name>] [--preset <name>] [--features <list>] [--dry-run] [--json]
+agent-ready add <feature> [--cwd <path>] [--json]
 agent-ready explain <check>
 ```
 
@@ -67,6 +67,12 @@ Scaffold an exact feature set:
 
 ```bash
 npx agent-ready init --framework next --features robots,llms,mcp
+```
+
+Scaffold into another directory:
+
+```bash
+npx agent-ready init --cwd ./apps/web --framework next --preset content-site
 ```
 
 Add only an MCP server card scaffold:
